@@ -1,0 +1,3210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SSB Pamanti Watatu — International Football Academy</title>
+  <meta name="theme-color" content="#109E72" />
+  <meta name="description" content="FIFA Talent Development & Elite Academy Management System - SSB Pamanti Watatu" />
+
+  <!-- Single-File PWA Web App Manifest via Data URI -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"SSB Pamanti Watatu International Academy","short_name":"Pamanti Watatu","start_url":".","display":"standalone","background_color":"#F4F7F6","theme_color":"#109E72","icons":[{"src":"https://placehold.co/192x192/109E72/FFFFFF?text=PW","sizes":"192x192","type":"image/png"},{"src":"https://placehold.co/512x512/109E72/FFFFFF?text=PW","sizes":"512x512","type":"image/png"}]}' />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (typeof tailwind !== 'undefined') {
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
+            colors: {
+              canvas: '#F4F7F6',
+              mint: '#E6F4F1',
+              brand: {
+                50: '#ECFDF5',
+                100: '#D1FAE5',
+                500: '#10B981',
+                600: '#109E72',
+                700: '#047857',
+                900: '#0F2922',
+              }
+            }
+          }
+        }
+      };
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Supabase JS v2 Standard UMD Script (Non-Module agar tidak pernah memblokir tombol UI) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* Full-Page Wrapper untuk menutup template eksternal (Blogger / GitHub Pages) */
+    #app-master-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      overflow: hidden;
+      background-color: #F4F7F6;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #0F2922;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Custom Scrollbar Halus */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F4F7F6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #109E72;
+    }
+
+    /* Card Soft Elevation sesuai Referensi Tableau de bord RH */
+    .bento-card {
+      background: #FFFFFF;
+      border: 1px solid #EEF2F6;
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px -4px rgba(16, 158, 114, 0.06);
+      transition: all 0.2s ease;
+    }
+    .bento-card:hover {
+      box-shadow: 0 8px 25px -4px rgba(16, 158, 114, 0.1);
+    }
+
+    /* Animasi Circular Ring */
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    button {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Media Queries Navigasi Adaptif */
+    @media (max-width: 767px) {
+      .desktop-sidebar {
+        display: none !important;
+      }
+      .mobile-bottom-nav {
+        display: flex !important;
+      }
+      .main-scroll-area {
+        padding-bottom: 5.5rem !important;
+      }
+    }
+    @media (min-width: 768px) {
+      .desktop-sidebar {
+        display: flex !important;
+      }
+      .mobile-bottom-nav {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#F4F7F6] antialiased selection:bg-emerald-600 selection:text-white">
+
+  <!-- MASTER FULL-SCREEN WRAPPER -->
+  <div id="app-master-wrapper">
+
+    <!-- PREVIEW BANNER (Hanya tampil jika IS_PREVIEW === true) -->
+    <div id="preview-banner" class="hidden bg-amber-500 text-white text-xs font-semibold px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-sm z-50 shrink-0">
+      <div class="flex items-center gap-2">
+        <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
+        <span>MODE PREVIEW AKTIF (Memori Lokal Browser) — Ubah <code class="bg-black/20 px-1.5 py-0.5 rounded">IS_PREVIEW = false</code> saat deploy ke Supabase.</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="window.app.quickLogin('admin')" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1 rounded-full text-[11px] font-bold transition shadow-xs">
+          Masuk sbg Head Coach / Admin
+        </button>
+        <button type="button" onclick="window.app.quickLogin('player')" class="bg-white text-emerald-800 hover:bg-emerald-50 px-3 py-1 rounded-full text-[11px] font-bold transition shadow-xs">
+          Masuk sbg Pemain (Rizky Pratama)
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-14 right-4 z-[1000005] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: LOGIN SCREEN (HYBRID AUTH)         -->
+    <!-- ========================================== -->
+    <div id="auth-view" class="flex-1 overflow-y-auto flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#F4F7F6] via-[#E6F4F1]/60 to-[#F4F7F6]">
+      <div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white rounded-3xl shadow-[0_12px_40px_-8px_rgba(16,158,114,0.12)] border border-slate-100 overflow-hidden">
+        
+        <!-- Left Hero Branding Panel -->
+        <div class="lg:col-span-5 bg-gradient-to-br from-[#0F2922] via-[#064E3B] to-[#109E72] text-white p-8 flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -right-12 -bottom-12 w-56 h-56 rounded-full bg-white/5 blur-xl pointer-events-none"></div>
+          <div class="relative z-10">
+            <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase mb-6">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-300"></i>
+              <span>FIFA Talent Development</span>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/30 border border-emerald-300/40 flex items-center justify-center font-extrabold text-xl tracking-tighter shadow-inner">
+                PW
+              </div>
+              <div>
+                <h1 class="text-2xl font-extrabold tracking-tight">SSB Pamanti Watatu</h1>
+                <p class="text-xs text-emerald-200 font-medium">International Football Academy</p>
+              </div>
+            </div>
+            <p class="text-sm text-emerald-100/90 leading-relaxed mt-4">
+              Sistem manajemen akademi sepak bola terpadu berstandar internasional. Pantau paspor lisensi atlet, radar performa FIFA, jadwal turnamen, tagihan SPP, dan pemesanan perlengkapan resmi.
+            </p>
+          </div>
+
+          <div class="relative z-10 mt-8 pt-6 border-t border-white/15 grid grid-cols-2 gap-3 text-xs">
+            <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
+              <div class="font-extrabold text-base text-emerald-300">U-10 s/d U-17</div>
+              <div class="text-emerald-100/80">Divisi Pembinaan</div>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
+              <div class="font-extrabold text-base text-emerald-300">100% Digital</div>
+              <div class="text-emerald-100/80">Player Passport & Store</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center">
+          <div class="mb-6">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md">Portal Akses Resmi</span>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Masuk ke Dashboard Akademi</h2>
+            <p class="text-xs text-slate-500 mt-1">Pilih peran akses Anda: Pemain/Wali Atlet atau Pelatih/Manajemen.</p>
+          </div>
+
+          <!-- Role Switch Tabs -->
+          <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+            <button type="button" id="tab-login-player" onclick="window.app.switchLoginTab('player')" class="py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm">
+              <i data-lucide="user-check" class="w-4 h-4"></i>
+              <span>Login Pemain / Atlet</span>
+            </button>
+            <button type="button" id="tab-login-admin" onclick="window.app.switchLoginTab('admin')" class="py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+              <span>Manajemen / Pelatih</span>
+            </button>
+          </div>
+
+          <!-- FORM 1: PLAYER LOGIN (Database Table Validation) -->
+          <form id="form-login-player" onsubmit="window.app.handlePlayerLogin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">ID Lisensi Atlet (Player Code)</label>
+              <div class="relative">
+                <i data-lucide="id-card" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="login-player-code" value="PW-2026-01" required placeholder="Contoh: PW-2026-01" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Kata Sandi Atlet</label>
+              <div class="relative">
+                <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="password" id="login-player-pass" value="123" required placeholder="Masukkan password atlet" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition" />
+              </div>
+            </div>
+            <button type="submit" id="btn-submit-player" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-xl text-sm shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+              <i data-lucide="log-in" class="w-4 h-4"></i>
+              <span>Buka Player Passport & Dashboard</span>
+            </button>
+          </form>
+
+          <!-- FORM 2: ADMIN LOGIN (Supabase Auth / Staff Admins Table) -->
+          <form id="form-login-admin" onsubmit="window.app.handleAdminLogin(event)" class="space-y-4 hidden">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Email Resmi Manajemen / Pelatih</label>
+              <div class="relative">
+                <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="email" id="login-admin-email" value="coach@pamantiwatatu.id" required placeholder="coach@pamantiwatatu.id" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Password Admin / Pelatih</label>
+              <div class="relative">
+                <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="password" id="login-admin-pass" value="123" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 focus:bg-white transition" />
+              </div>
+            </div>
+            <button type="submit" id="btn-submit-admin" class="w-full py-3 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+              <span>Masuk Panel Eksekutif Admin</span>
+            </button>
+          </form>
+
+          <!-- QUICK LOGIN SHORTCUTS (Hanya tampil jika IS_PREVIEW === true) -->
+          <div id="preview-quick-login" class="hidden mt-6 pt-5 border-t border-dashed border-slate-200">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Pintasan Uji Coba Instan (Klik Langsung Masuk)</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button type="button" onclick="window.app.quickLogin('player')" class="py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 active:scale-[0.98] text-emerald-800 font-bold text-xs border border-emerald-200 transition flex items-center justify-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
+                <span>Masuk sbg Pemain (Rizky Pratama)</span>
+              </button>
+              <button type="button" onclick="window.app.quickLogin('admin')" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-xs border border-slate-200 transition flex items-center justify-center gap-2">
+                <i data-lucide="award" class="w-4 h-4 text-slate-700"></i>
+                <span>Masuk sbg Head Coach / Admin</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: MAIN APPLICATION WORKSPACE         -->
+    <!-- ========================================== -->
+    <div id="main-view" class="hidden flex-1 flex overflow-hidden">
+
+      <!-- DESKTOP LEFT SIDEBAR (Sesuai Referensi UI Tableau de bord RH) -->
+      <aside class="desktop-sidebar w-64 bg-white border-r border-slate-100 flex-col justify-between shrink-0 select-none z-20 overflow-y-auto">
+        <div class="p-5">
+          <!-- Brand Logo -->
+          <div class="flex items-center gap-3 pb-5 mb-5 border-b border-slate-100">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-extrabold text-base shadow-sm shadow-emerald-600/30 shrink-0">
+              PW
+            </div>
+            <div class="overflow-hidden">
+              <div id="sidebar-academy-name" class="font-extrabold text-sm text-slate-900 truncate">SSB Pamanti Watatu</div>
+              <div id="sidebar-academy-slogan" class="text-[11px] font-semibold text-emerald-600 truncate">FIFA Elite Academy</div>
+            </div>
+          </div>
+
+          <!-- Menu Navigation Items -->
+          <div class="space-y-1" id="desktop-nav-list">
+            <!-- Di-render dinamis via JS -->
+          </div>
+        </div>
+
+        <!-- Bottom Sidebar Academy Director & Head Coach Card -->
+        <div class="p-4">
+          <div class="bg-[#E6F4F1] rounded-2xl p-4 relative overflow-hidden">
+            <div class="flex items-center gap-2.5 mb-2">
+              <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <i data-lucide="award" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold uppercase text-emerald-700">Academy Director</div>
+                <div id="sidebar-director-name" class="text-xs font-extrabold text-slate-900 truncate">Drs. H. Ahmad Watatu</div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-600 space-y-0.5 pt-2 border-t border-emerald-200/60">
+              <div class="truncate"><strong>Head Coach:</strong> <span id="sidebar-coach-name">Coach Hendra Watatu</span></div>
+              <div class="text-[10px] text-emerald-700 font-semibold truncate" id="sidebar-coach-license">AFC Pro / FIFA Elite Diploma</div>
+            </div>
+            <button type="button" id="sidebar-action-btn" onclick="window.app.navigate('store')" class="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+              Buka Official Store
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT CONTENT AREA -->
+      <div class="flex-1 flex flex-col overflow-hidden bg-[#F4F7F6]">
+
+        <!-- TOP HEADER BAR (Breadcrumb, Search Kapsul, User Profile Chip) -->
+        <header class="bg-white border-b border-slate-100 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 shrink-0 z-10">
+          <!-- Left: Page Title & Breadcrumb -->
+          <div>
+            <h1 id="header-page-title" class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">Détails de l'athlète & Dashboard</h1>
+            <p id="header-breadcrumb" class="text-[11px] text-slate-400 font-medium">Beranda &gt; Dashboard Utama &gt; Paspor & Tagihan</p>
+          </div>
+
+          <!-- Center: Search Input Capsule -->
+          <div class="hidden md:flex items-center flex-1 max-w-xs relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5"></i>
+            <input type="text" id="global-search-input" oninput="window.app.handleGlobalSearch(this.value)" placeholder="Cari atlet, perlengkapan, jadwal..." class="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full text-xs text-slate-700 focus:outline-none focus:border-emerald-500 focus:bg-white transition" />
+          </div>
+
+          <!-- Right: Role Badge, User Profile & Logout -->
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <!-- Tombol Refresh Database -->
+            <button type="button" onclick="window.app.refreshAllData()" title="Sinkronisasi Data" class="p-2 rounded-full bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200/60 transition">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+
+            <!-- User Chip -->
+            <div class="flex items-center gap-2.5 pl-2 border-l border-slate-100">
+              <img id="header-user-avatar" src="https://placehold.co/100x100/109E72/FFFFFF?text=PW" alt="Avatar" class="w-9 h-9 rounded-full object-cover border-2 border-emerald-500/30" />
+              <div class="hidden sm:block text-left">
+                <div id="header-user-name" class="text-xs font-extrabold text-slate-900 leading-none">Nama Pengguna</div>
+                <div id="header-user-role" class="text-[10px] font-semibold text-emerald-600 mt-0.5">Peran Akses</div>
+              </div>
+              <button type="button" onclick="window.app.handleLogout()" title="Keluar / Logout" class="ml-1 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition flex items-center gap-1">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span class="hidden lg:inline">Keluar</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- MAIN SCROLLABLE WORKSPACE -->
+        <main id="workspace-content" class="main-scroll-area flex-1 overflow-y-auto p-4 sm:p-6">
+          <!-- Seluruh halaman menu di-render secara dinamis di sini -->
+        </main>
+
+        <!-- MOBILE FLOATING BOTTOM NAVIGATION BAR (< 768px) -->
+        <nav id="mobile-nav-list" class="mobile-bottom-nav fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 justify-around items-center py-1.5 px-1 shadow-lg">
+          <!-- Di-render dinamis via JS -->
+        </nav>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- UNIVERSAL MODAL DIALOG                     -->
+    <!-- ========================================== -->
+    <div id="modal-backdrop" onclick="if(event.target === this) window.app.closeModal()" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[1000000] flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-100 shadow-2xl overflow-hidden my-8">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <h3 id="modal-title" class="text-base font-extrabold text-slate-900">Judul Modal</h3>
+          <button type="button" onclick="window.app.closeModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="modal-body" class="p-6 max-h-[80vh] overflow-y-auto">
+          <!-- Konten Form Modal -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- APPLICATION LOGIC & SUPABASE INTEGRATION (NON-MODULE STANDARD)    -->
+  <!-- ================================================================= -->
+  <script>
+    (function () {
+      // SAKLAR MODE PREVIEW VS PRODUKSI SUPABASE
+      const IS_PREVIEW = false; // Ubah menjadi false SAAT DEPLOY agar mode preview & data dummy hilang dan terhubung 100% ke Supabase
+      const SUPABASE_URL = "https://wmrjwscrdsllydmiqcep.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtcmp3c2NyZHNsbHlkbWlxY2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzgxNTQsImV4cCI6MjEwODYxNDE1NH0.xyrXXcM272fTkzFRQ2qHBPPSOOKO1PaakIqAuiw-ekw";
+
+      // Inisialisasi Klien Supabase dengan aman tanpa pernah membuat script crash
+      let supabaseClient = null;
+      if (!IS_PREVIEW && window.supabase && typeof window.supabase.createClient === 'function') {
+        try {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (err) {
+          console.error('Gagal menginisialisasi Supabase:', err);
+        }
+      }
+
+      // Safe Lucide Icon Renderer
+      function refreshIcons() {
+        try {
+          if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+          }
+        } catch (e) {}
+      }
+
+      // Register Service Worker Dinamis via Blob untuk PWA Single-File
+      if ('serviceWorker' in navigator) {
+        try {
+          const swCode = "self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(self.clients.claim())); self.addEventListener('fetch', e => {});";
+          const blob = new Blob([swCode], { type: 'application/javascript' });
+          navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(function () {});
+        } catch (e) {}
+      }
+
+      // State Global Aplikasi
+      const state = {
+        currentUser: null, // { role: 'admin' | 'player', data: {...} }
+        activeMenu: 'dashboard',
+        activeSettingsTab: 'profile', // 'profile' | 'coaches' | 'admins'
+        selectedDashboardPlayerId: null,
+        playerAgeFilter: 'ALL',
+        searchQuery: '',
+        calendarMonthIndex: 10, // 10 = November 2026, 4 = Mei 2026
+        // Pengaturan Akademi & Pimpinan (Head Coach & Academy Director)
+        academy_settings: {
+          id: 'cfg-1',
+          academy_name: 'SSB Pamanti Watatu',
+          slogan: 'FIFA Talent Development & Elite Academy',
+          head_coach_name: 'Coach Hendra Watatu',
+          head_coach_license: 'AFC Pro / FIFA Elite Diploma',
+          head_coach_photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
+          academy_director_name: 'Drs. H. Ahmad Watatu, M.Pd',
+          finance_manager_name: 'Siti Rahmawati, S.E.',
+          default_bank_info: 'BRI 7182-01-009281-53-2 a.n SSB Pamanti Watatu',
+          whatsapp_contact: '0812-4567-8910'
+        },
+        staff_admins: [],
+        players: [],
+        evaluations: [],
+        billing: [],
+        merchandise: [],
+        merchandise_orders: [],
+        schedules: []
+      };
+
+      // Data Dummy Minimalis (Maksimal 2 baris per tabel, HANYA dimuat saat IS_PREVIEW === true)
+      function loadPreviewDummyData() {
+        state.staff_admins = [
+          {
+            id: 'adm-1',
+            full_name: 'Coach Hendra Watatu',
+            role_title: 'Head Coach',
+            squad_group: 'All Squad',
+            license: 'AFC Pro / FIFA Elite Diploma',
+            email: 'coach@pamantiwatatu.id',
+            password: '123',
+            access_level: 'Super Admin',
+            phone: '0812-4567-8910',
+            photo_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
+            status: 'Active'
+          },
+          {
+            id: 'adm-2',
+            full_name: 'Drs. H. Ahmad Watatu, M.Pd',
+            role_title: 'Academy Director',
+            squad_group: 'All Squad',
+            license: 'FIFA Executive Football Management',
+            email: 'director@pamantiwatatu.id',
+            password: '123',
+            access_level: 'Super Admin',
+            phone: '0811-4500-221',
+            photo_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+            status: 'Active'
+          }
+        ];
+
+        state.players = [
+          {
+            id: 'p-101',
+            player_code: 'PW-2026-01',
+            password: '123',
+            full_name: 'Rizky Pratama Watatu',
+            photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+            age_group: 'U-17',
+            position: 'MF',
+            jersey_number: 10,
+            dominant_foot: 'Right',
+            height_cm: 174,
+            weight_kg: 64,
+            status: 'Active'
+          },
+          {
+            id: 'p-102',
+            player_code: 'PW-2026-02',
+            password: '123',
+            full_name: 'Aldo Saputra Tadulako',
+            photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+            age_group: 'U-15',
+            position: 'FW',
+            jersey_number: 9,
+            dominant_foot: 'Left',
+            height_cm: 168,
+            weight_kg: 58,
+            status: 'Scholarship'
+          }
+        ];
+
+        state.evaluations = [
+          {
+            id: 'ev-1',
+            player_id: 'p-101',
+            eval_period: 'Semester Genap 2026',
+            pace: 88,
+            shooting: 84,
+            passing: 91,
+            dribbling: 89,
+            defending: 76,
+            physical: 85,
+            overall_rating: 86,
+            coach_notes: 'Visi bermain dan distribusi umpan panjang berstandar elit. Pertahankan ketahanan fisik di menit akhir.'
+          },
+          {
+            id: 'ev-2',
+            player_id: 'p-102',
+            eval_period: 'Semester Genap 2026',
+            pace: 90,
+            shooting: 87,
+            passing: 80,
+            dribbling: 86,
+            defending: 68,
+            physical: 82,
+            overall_rating: 82,
+            coach_notes: 'Penyelesaian akhir kaki kiri sangat tajam di kotak penalti.'
+          }
+        ];
+
+        state.billing = [
+          {
+            id: 'bill-1',
+            player_id: 'p-101',
+            period_month: 'November 2026',
+            attendance_pct: 95,
+            fee_amount: 350000,
+            payment_status: 'Unpaid',
+            transfer_ref: '',
+            notes: 'Iuran Pembinaan Reguler & Lisensi Internasional'
+          },
+          {
+            id: 'bill-2',
+            player_id: 'p-102',
+            period_month: 'November 2026',
+            attendance_pct: 100,
+            fee_amount: 0,
+            payment_status: 'Scholarship',
+            transfer_ref: 'BEASISWA-PRESTASI',
+            notes: 'Bebas SPP Program Beasiswa Prestasi Atlet'
+          }
+        ];
+
+        state.merchandise = [
+          {
+            id: 'm-1',
+            item_name: 'Official Home Jersey SSB Pamanti Watatu 2026',
+            category: 'Match Kit',
+            price: 225000,
+            stock: 25,
+            sizes: 'S, M, L, XL',
+            image_url: 'https://images.unsplash.com/photo-1577212017184-80cc0da11082?auto=format&fit=crop&w=500&q=80',
+            bank_info: 'BRI 7182-01-009281-53-2 a.n SSB Pamanti Watatu'
+          },
+          {
+            id: 'm-2',
+            item_name: 'Pro Training Tracksuit & Tas Sepatu Akademi',
+            category: 'Training Gear',
+            price: 310000,
+            stock: 18,
+            sizes: 'M, L, XL',
+            image_url: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=500&q=80',
+            bank_info: 'Bank Sulteng 001-02-099812-1 a.n SSB Pamanti Watatu'
+          }
+        ];
+
+        state.merchandise_orders = [
+          {
+            id: 'ord-1',
+            merch_id: 'm-1',
+            player_id: 'p-101',
+            player_name: 'Rizky Pratama Watatu',
+            item_name: 'Official Home Jersey SSB Pamanti Watatu 2026',
+            selected_size: 'L',
+            qty: 1,
+            total_price: 225000,
+            payment_proof: 'TF BRI a.n Wali Rizky - Ref 882910',
+            order_status: 'Waiting Verification',
+            created_at: '2026-11-05'
+          }
+        ];
+
+        state.schedules = [
+          {
+            id: 'sch-1',
+            title: 'Tactical Possession & High Pressing Drill',
+            event_type: 'Training',
+            age_group: 'U-17',
+            event_date: '2026-11-12',
+            event_time: '15:30 WITA',
+            venue: 'Stadion Mini Pamanti Watatu',
+            opponent: 'Internal Squad Scrimmage',
+            match_result: 'Scheduled'
+          },
+          {
+            id: 'sch-2',
+            title: 'International Youth Friendly Cup 2026',
+            event_type: 'Tournament',
+            age_group: 'All Squads',
+            event_date: '2026-11-20',
+            event_time: '08:00 WITA',
+            venue: 'Arena Utama Watatu',
+            opponent: 'Garuda Muda Academy',
+            match_result: 'Menang 3 - 1'
+          }
+        ];
+
+        state.selectedDashboardPlayerId = state.players[0].id;
+      }
+
+      // Format Rupiah
+      function formatIDR(num) {
+        const val = Number(num) || 0;
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+      }
+
+      // Toast Notification Helper
+      function showToast(message, type) {
+        type = type || 'success';
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const el = document.createElement('div');
+        const bg = type === 'error' ? 'bg-rose-600' : type === 'info' ? 'bg-slate-800' : 'bg-emerald-600';
+        el.className = bg + ' text-white px-4 py-3 rounded-2xl shadow-lg text-xs font-bold flex items-center justify-between gap-3 pointer-events-auto transition-all duration-300';
+        el.innerHTML = '<div class="flex items-center gap-2"><i data-lucide="' + (type === 'error' ? 'alert-circle' : 'check-circle-2') + '" class="w-4 h-4 shrink-0"></i><span>' + message + '</span></div>';
+        container.appendChild(el);
+        refreshIcons();
+        setTimeout(function () {
+          el.style.opacity = '0';
+          setTimeout(function () { el.remove(); }, 300);
+        }, 3200);
+      }
+
+      // Helper Konversi File Gambar ke Base64 ringan agar foto langsung tampil
+      function handleImageFileUpload(inputElement, targetInputId, previewImgId) {
+        const file = inputElement.files && inputElement.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement('canvas');
+            const maxDim = 360;
+            let w = img.width;
+            let h = img.height;
+            if (w > h && w > maxDim) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else if (h > maxDim) {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            const targetInput = document.getElementById(targetInputId);
+            if (targetInput) targetInput.value = dataUrl;
+            const previewImg = document.getElementById(previewImgId);
+            if (previewImg) previewImg.src = dataUrl;
+            showToast('Foto berhasil dimuat!');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Copy Teks ke Clipboard (Mendukung iFrame)
+      function copyText(text, label) {
+        label = label || 'Nomor Rekening';
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+        showToast(label + ' berhasil disalin: ' + text);
+      }
+
+      // =================================================================
+      // SUPABASE DATA FETCHING (100% REAL QUERIES SAAT IS_PREVIEW = false)
+      // =================================================================
+      async function fetchAllSupabaseData() {
+        if (IS_PREVIEW || !supabaseClient) return;
+        try {
+          const results = await Promise.all([
+            supabaseClient.from('players').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('player_evaluations').select('*').order('updated_at', { ascending: false }),
+            supabaseClient.from('attendance_billing').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('merchandise').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('merchandise_orders').select('*').order('created_at', { ascending: false }),
+            supabaseClient.from('schedules').select('*').order('event_date', { ascending: true }),
+            supabaseClient.from('academy_settings').select('*').limit(1),
+            supabaseClient.from('staff_admins').select('*').order('created_at', { ascending: true })
+          ]);
+
+          state.players = results[0].data || [];
+          state.evaluations = results[1].data || [];
+          state.billing = results[2].data || [];
+          state.merchandise = results[3].data || [];
+          state.merchandise_orders = results[4].data || [];
+          state.schedules = results[5].data || [];
+          state.staff_admins = results[7].data || [];
+
+          if (results[6].data && results[6].data.length > 0) {
+            state.academy_settings = Object.assign({}, state.academy_settings, results[6].data[0]);
+          }
+
+          if (state.currentUser && state.currentUser.role === 'player') {
+            const freshPlayer = state.players.find(function (p) { return p.id === state.currentUser.data.id; });
+            if (freshPlayer) state.currentUser.data = freshPlayer;
+            state.selectedDashboardPlayerId = state.currentUser.data.id;
+          } else if (!state.selectedDashboardPlayerId && state.players.length > 0) {
+            state.selectedDashboardPlayerId = state.players[0].id;
+          }
+        } catch (err) {
+          showToast('Gagal memuat data dari Supabase: ' + err.message, 'error');
+        }
+      }
+
+      // =================================================================
+      // AUTHENTICATION HANDLERS (HYBRID AUTH)
+      // =================================================================
+      function switchLoginTab(tab) {
+        const btnPlayer = document.getElementById('tab-login-player');
+        const btnAdmin = document.getElementById('tab-login-admin');
+        const formPlayer = document.getElementById('form-login-player');
+        const formAdmin = document.getElementById('form-login-admin');
+
+        if (tab === 'player') {
+          btnPlayer.className = 'py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm';
+          btnAdmin.className = 'py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900';
+          formPlayer.classList.remove('hidden');
+          formAdmin.classList.add('hidden');
+        } else {
+          btnAdmin.className = 'py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white text-slate-900 shadow-sm';
+          btnPlayer.className = 'py-2.5 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900';
+          formAdmin.classList.remove('hidden');
+          formPlayer.classList.add('hidden');
+        }
+      }
+
+      async function handlePlayerLogin(e) {
+        if (e) e.preventDefault();
+        const code = document.getElementById('login-player-code').value.trim();
+        const pass = document.getElementById('login-player-pass').value.trim();
+
+        if (IS_PREVIEW) {
+          const found = state.players.find(function (p) {
+            return p.player_code.toLowerCase() === code.toLowerCase() && p.password === pass;
+          }) || state.players[0];
+
+          if (!found) {
+            showToast('ID Lisensi atau Password tidak cocok (Coba: PW-2026-01 / 123)', 'error');
+            return;
+          }
+          loginSuccess({ role: 'player', data: found });
+          return;
+        }
+
+        try {
+          const res = await supabaseClient
+            .from('players')
+            .select('*')
+            .eq('player_code', code)
+            .eq('password', pass)
+            .single();
+
+          if (res.error || !res.data) {
+            showToast('ID Lisensi Atlet atau Kata Sandi salah!', 'error');
+            return;
+          }
+          await fetchAllSupabaseData();
+          loginSuccess({ role: 'player', data: res.data });
+        } catch (err) {
+          showToast('Gagal masuk: ' + err.message, 'error');
+        }
+      }
+
+      async function handleAdminLogin(e) {
+        if (e) e.preventDefault();
+        const email = document.getElementById('login-admin-email').value.trim();
+        const password = document.getElementById('login-admin-pass').value.trim();
+
+        if (IS_PREVIEW) {
+          const matchedStaff = state.staff_admins.find(function (s) {
+            return s.email.toLowerCase() === email.toLowerCase() && s.password === password;
+          }) || state.staff_admins[0];
+
+          loginSuccess({
+            role: 'admin',
+            data: {
+              id: matchedStaff ? matchedStaff.id : 'admin-1',
+              full_name: matchedStaff ? matchedStaff.full_name : state.academy_settings.head_coach_name,
+              role_title: matchedStaff ? (matchedStaff.role_title + ' (' + matchedStaff.access_level + ')') : 'Head Coach & Academy Director',
+              email: email || 'coach@pamantiwatatu.id',
+              photo_url: matchedStaff ? matchedStaff.photo_url : state.academy_settings.head_coach_photo
+            }
+          });
+          return;
+        }
+
+        try {
+          const staffRes = await supabaseClient
+            .from('staff_admins')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .eq('status', 'Active')
+            .maybeSingle();
+
+          if (staffRes.data) {
+            await fetchAllSupabaseData();
+            loginSuccess({
+              role: 'admin',
+              data: {
+                id: staffRes.data.id,
+                full_name: staffRes.data.full_name,
+                role_title: staffRes.data.role_title + ' (' + staffRes.data.access_level + ')',
+                email: staffRes.data.email,
+                photo_url: staffRes.data.photo_url || state.academy_settings.head_coach_photo
+              }
+            });
+            return;
+          }
+
+          const authRes = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+          if (authRes.error) {
+            showToast('Login Admin gagal: Email/Password tidak cocok.', 'error');
+            return;
+          }
+          await fetchAllSupabaseData();
+          loginSuccess({
+            role: 'admin',
+            data: {
+              id: authRes.data.user.id,
+              full_name: state.academy_settings.head_coach_name || authRes.data.user.email.split('@')[0].toUpperCase(),
+              role_title: 'Head Coach & Academy Director',
+              email: authRes.data.user.email,
+              photo_url: state.academy_settings.head_coach_photo
+            }
+          });
+        } catch (err) {
+          showToast('Kesalahan jaringan: ' + err.message, 'error');
+        }
+      }
+
+      function quickLogin(role) {
+        if (!IS_PREVIEW) return;
+        if (state.players.length === 0) loadPreviewDummyData();
+        if (role === 'player') {
+          const p = state.players[0];
+          loginSuccess({ role: 'player', data: p });
+        } else {
+          loginSuccess({
+            role: 'admin',
+            data: {
+              id: 'adm-1',
+              full_name: state.academy_settings.head_coach_name,
+              role_title: 'Head Coach • Dir: ' + state.academy_settings.academy_director_name,
+              email: 'coach@pamantiwatatu.id',
+              photo_url: state.academy_settings.head_coach_photo
+            }
+          });
+        }
+      }
+
+      function loginSuccess(userObj) {
+        state.currentUser = userObj;
+        if (userObj.role === 'player') {
+          state.selectedDashboardPlayerId = userObj.data.id;
+        } else if (!state.selectedDashboardPlayerId && state.players.length > 0) {
+          state.selectedDashboardPlayerId = state.players[0].id;
+        }
+
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('main-view').classList.remove('hidden');
+
+        updateHeaderUserProfile();
+        renderNavigation();
+        navigate('dashboard');
+        showToast('Selamat datang, ' + userObj.data.full_name + '!');
+      }
+
+      async function handleLogout() {
+        if (!IS_PREVIEW && supabaseClient && state.currentUser && state.currentUser.role === 'admin') {
+          try { await supabaseClient.auth.signOut(); } catch (e) {}
+        }
+        state.currentUser = null;
+        document.getElementById('main-view').classList.add('hidden');
+        document.getElementById('auth-view').classList.remove('hidden');
+        showToast('Anda telah keluar dari sesi akademi.', 'info');
+      }
+
+      function updateHeaderUserProfile() {
+        const cfg = state.academy_settings;
+        const elAcName = document.getElementById('sidebar-academy-name');
+        const elAcSlogan = document.getElementById('sidebar-academy-slogan');
+        const elDirName = document.getElementById('sidebar-director-name');
+        const elCoachName = document.getElementById('sidebar-coach-name');
+        const elCoachLic = document.getElementById('sidebar-coach-license');
+        const elSideBtn = document.getElementById('sidebar-action-btn');
+
+        if (elAcName) elAcName.textContent = cfg.academy_name;
+        if (elAcSlogan) elAcSlogan.textContent = cfg.slogan;
+        if (elDirName) elDirName.textContent = cfg.academy_director_name;
+        if (elCoachName) elCoachName.textContent = cfg.head_coach_name;
+        if (elCoachLic) elCoachLic.textContent = cfg.head_coach_license;
+
+        if (!state.currentUser) return;
+        const isPlayer = state.currentUser.role === 'player';
+        const u = state.currentUser.data;
+
+        if (elSideBtn) {
+          if (isPlayer) {
+            elSideBtn.textContent = 'Buka Official Store';
+            elSideBtn.setAttribute('onclick', "window.app.navigate('store')");
+          } else {
+            elSideBtn.textContent = 'Pengaturan Pelatih & Admin';
+            elSideBtn.setAttribute('onclick', "window.app.navigate('settings')");
+          }
+        }
+
+        document.getElementById('header-user-name').textContent = isPlayer
+          ? u.full_name
+          : (u.full_name || cfg.head_coach_name);
+        document.getElementById('header-user-role').textContent = isPlayer
+          ? ('Atlet ' + u.age_group + ' • ' + u.player_code)
+          : (u.role_title || ('Head Coach • Dir: ' + cfg.academy_director_name));
+        document.getElementById('header-user-avatar').src =
+          u.photo_url || cfg.head_coach_photo || 'https://placehold.co/100x100/109E72/FFFFFF?text=PW';
+      }
+
+      // =================================================================
+      // NAVIGATION & 7 MENU RENDERER
+      // =================================================================
+      const MENU_CONFIG = [
+        { id: 'dashboard', label: 'Dashboard & Paspor', shortLabel: 'Dashboard', icon: 'layout-dashboard', breadcrumb: 'Beranda > Dashboard Utama > Paspor, Tagihan & Kit', adminOnly: false },
+        { id: 'players', label: 'Database Atlet', shortLabel: 'Atlet', icon: 'users', breadcrumb: 'Beranda > Database Atlet > Lisensi Internasional', adminOnly: false },
+        { id: 'store', label: 'Perlengkapan & Order', shortLabel: 'Store', icon: 'shopping-bag', breadcrumb: 'Beranda > Official Store > Pemesanan & Transfer', adminOnly: false },
+        { id: 'evaluations', label: 'Rapor & Performa', shortLabel: 'Rapor', icon: 'activity', breadcrumb: 'Beranda > Technical Scouting > Rapor Standar FIFA', adminOnly: false },
+        { id: 'schedules', label: 'Jadwal & Turnamen', shortLabel: 'Jadwal', icon: 'calendar', breadcrumb: 'Beranda > Match Center > Latihan & Turnamen', adminOnly: false },
+        { id: 'billing', label: 'Tagihan & Presensi', shortLabel: 'Tagihan', icon: 'wallet', breadcrumb: 'Beranda > Administrasi > SPP & Bukti Transfer', adminOnly: false },
+        { id: 'settings', label: 'Pengaturan & Admin', shortLabel: 'Pengaturan', icon: 'settings', breadcrumb: 'Beranda > Pengaturan Akademi > Head Coach, Director & Admin', adminOnly: true }
+      ];
+
+      function renderNavigation() {
+        const desktopList = document.getElementById('desktop-nav-list');
+        const mobileList = document.getElementById('mobile-nav-list');
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const visibleMenus = MENU_CONFIG.filter(function (m) { return !m.adminOnly || isAdmin; });
+
+        desktopList.innerHTML = visibleMenus.map(function (item) {
+          const active = state.activeMenu === item.id;
+          return '<button type="button" onclick="window.app.navigate(\'' + item.id + '\')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ' +
+            (active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/25' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900') + '">' +
+            '<i data-lucide="' + item.icon + '" class="w-4 h-4"></i>' +
+            '<span>' + item.label + '</span>' +
+            '</button>';
+        }).join('');
+
+        mobileList.innerHTML = visibleMenus.map(function (item) {
+          const active = state.activeMenu === item.id;
+          return '<button type="button" onclick="window.app.navigate(\'' + item.id + '\')" class="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all ' +
+            (active ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium') + '">' +
+            '<i data-lucide="' + item.icon + '" class="w-5 h-5"></i>' +
+            '<span class="text-[10px] mt-0.5">' + item.shortLabel + '</span>' +
+            '</button>';
+        }).join('');
+
+        refreshIcons();
+      }
+
+      function navigate(menuId) {
+        if (menuId === 'merchandise') menuId = 'store';
+        if (menuId === 'settings' && (!state.currentUser || state.currentUser.role !== 'admin')) {
+          showToast('Menu Pengaturan hanya dapat diakses oleh Admin / Pelatih!', 'error');
+          return;
+        }
+        state.activeMenu = menuId;
+        const cfg = MENU_CONFIG.find(function (m) { return m.id === menuId; }) || MENU_CONFIG[0];
+        document.getElementById('header-page-title').textContent = cfg.label;
+        document.getElementById('header-breadcrumb').textContent = cfg.breadcrumb;
+        renderNavigation();
+        renderWorkspace();
+      }
+
+      function handleGlobalSearch(val) {
+        state.searchQuery = (val || '').toLowerCase().trim();
+        renderWorkspace();
+      }
+
+      async function refreshAllData() {
+        if (!IS_PREVIEW) {
+          await fetchAllSupabaseData();
+        }
+        updateHeaderUserProfile();
+        renderWorkspace();
+        showToast('Data akademi berhasil disinkronkan!');
+      }
+
+      function toggleCalendarMonth() {
+        state.calendarMonthIndex = state.calendarMonthIndex === 10 ? 4 : 10;
+        renderWorkspace();
+      }
+
+      function setPlayerAgeFilter(ageGroup) {
+        state.playerAgeFilter = ageGroup;
+        renderWorkspace();
+      }
+
+      // =================================================================
+      // MAIN WORKSPACE ROUTER
+      // =================================================================
+      function renderWorkspace() {
+        const container = document.getElementById('workspace-content');
+        if (!container) return;
+
+        switch (state.activeMenu) {
+          case 'dashboard':
+            container.innerHTML = renderDashboardView();
+            break;
+          case 'players':
+            container.innerHTML = renderPlayersView();
+            break;
+          case 'store':
+            container.innerHTML = renderMerchandiseView();
+            break;
+          case 'evaluations':
+            container.innerHTML = renderEvaluationsView();
+            break;
+          case 'schedules':
+            container.innerHTML = renderSchedulesView();
+            break;
+          case 'billing':
+            container.innerHTML = renderBillingView();
+            break;
+          case 'settings':
+            container.innerHTML = renderSettingsView();
+            break;
+          default:
+            container.innerHTML = renderDashboardView();
+        }
+        refreshIcons();
+      }
+
+      // =================================================================
+      // MENU 1: DASHBOARD BENTO GRID (PERSIS REFERENSI TABLEAU DE BORD RH)
+      // =================================================================
+      function renderDashboardView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const cfg = state.academy_settings;
+        const currentPlayer = isAdmin
+          ? (state.players.find(function (p) { return p.id === state.selectedDashboardPlayerId; }) || state.players[0])
+          : (state.players.find(function (p) { return state.currentUser && p.id === state.currentUser.data.id; }) || (state.currentUser && state.currentUser.data));
+
+        const playerEval = currentPlayer
+          ? state.evaluations.find(function (e) { return e.player_id === currentPlayer.id; })
+          : null;
+        const playerBills = currentPlayer
+          ? state.billing.filter(function (b) { return b.player_id === currentPlayer.id; })
+          : [];
+        const playerOrders = currentPlayer
+          ? state.merchandise_orders.filter(function (o) { return o.player_id === currentPlayer.id; })
+          : [];
+
+        const ovr = playerEval ? playerEval.overall_rating : 84;
+        const latestBill = playerBills[0] || null;
+        const attendancePct = latestBill ? latestBill.attendance_pct : 95;
+        const starScore = ((ovr / 100) * 5).toFixed(1);
+
+        const unpaidSpp = playerBills
+          .filter(function (b) { return b.payment_status === 'Unpaid'; })
+          .reduce(function (acc, b) { return acc + Number(b.fee_amount || 0); }, 0);
+        const pendingKitTotal = playerOrders
+          .filter(function (o) { return o.order_status === 'Waiting Verification'; })
+          .reduce(function (acc, o) { return acc + Number(o.total_price || 0); }, 0);
+        const totalActiveBill = unpaidSpp + pendingKitTotal;
+
+        const createRing = function (percent, labelTop, mainValue, subText, strokeColor) {
+          const radius = 34;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference - (Math.min(100, Math.max(0, percent)) / 100) * circumference;
+          return `
+            <div class="bento-card p-4 flex flex-col items-center justify-between text-center">
+              <div class="text-xs font-bold text-slate-700 mb-2">${labelTop}</div>
+              <div class="relative w-24 h-24 flex items-center justify-center">
+                <svg class="w-24 h-24" viewBox="0 0 84 84">
+                  <circle cx="42" cy="42" r="${radius}" stroke="#EEF2F6" stroke-width="6" fill="transparent"></circle>
+                  <circle cx="42" cy="42" r="${radius}" stroke="${strokeColor}" stroke-width="6" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" fill="transparent" class="progress-ring-circle"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-base font-extrabold text-slate-900 leading-none">${mainValue}</span>
+                  <span class="text-[10px] font-medium text-slate-400 mt-0.5">${subText}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        };
+
+        const merchCardsHtml = state.merchandise.length === 0
+          ? `<div class="col-span-full text-center py-6 text-xs text-slate-400">Belum ada perlengkapan yang diposting oleh Admin.</div>`
+          : state.merchandise.map(function (item) {
+              return `
+                <div class="border border-slate-100 rounded-2xl p-3 bg-slate-50/50 hover:bg-white transition flex flex-col justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <img src="${item.image_url || 'https://placehold.co/120x120/109E72/FFFFFF?text=KIT'}" onerror="this.src='https://placehold.co/120x120/109E72/FFFFFF?text=KIT'" alt="${item.item_name}" class="w-16 h-16 rounded-xl object-cover shrink-0 border border-slate-200/60" />
+                    <div class="min-w-0 flex-1">
+                      <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">${item.category}</span>
+                      <h5 class="text-xs font-extrabold text-slate-900 truncate mt-1" title="${item.item_name}">${item.item_name}</h5>
+                      <div class="text-sm font-extrabold text-emerald-600 mt-0.5">${formatIDR(item.price)}</div>
+                      <div class="text-[10px] text-slate-400">Ukuran: ${item.sizes} • Stok: ${item.stock}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                    <div class="text-[10px] text-slate-500 truncate" title="${item.bank_info}">
+                      <i data-lucide="landmark" class="w-3 h-3 inline text-emerald-600 mr-1"></i>${item.bank_info}
+                    </div>
+                    <button type="button" onclick="window.app.openOrderMerchModal('${item.id}')" class="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-xs transition flex items-center gap-1">
+                      <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+                      <span>Pesan & Transfer</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+        const adminTopBar = isAdmin ? `
+          <div class="mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="bento-card p-4 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <img src="${cfg.head_coach_photo}" onerror="this.src='https://placehold.co/100x100/109E72/FFFFFF?text=HC'" class="w-11 h-11 rounded-2xl object-cover border border-emerald-200 shrink-0" />
+                <div class="min-w-0">
+                  <div class="text-[10px] font-bold uppercase text-emerald-600">Head Coach & Director</div>
+                  <div class="text-xs font-extrabold text-slate-900 truncate" title="${cfg.head_coach_name}">${cfg.head_coach_name}</div>
+                  <div class="text-[10px] text-slate-400 truncate">Dir: ${cfg.academy_director_name}</div>
+                </div>
+              </div>
+              <button type="button" onclick="window.app.navigate('settings')" title="Ubah Nama Pelatih & Direktur" class="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white transition shrink-0">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <div class="bento-card p-4 flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-[11px] font-semibold text-slate-400">Total Atlet & Pelatih</div>
+                <div class="text-base font-extrabold text-slate-900">${state.players.length} Atlet • ${state.staff_admins.length} Staf</div>
+              </div>
+            </div>
+            <div class="bento-card p-4 flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-[11px] font-semibold text-slate-400">Verifikasi Kit & SPP</div>
+                <div class="text-base font-extrabold text-slate-900">${state.merchandise_orders.filter(function (o) { return o.order_status === 'Waiting Verification'; }).length} Kit • ${state.billing.filter(function (b) { return b.payment_status === 'Unpaid'; }).length} SPP</div>
+              </div>
+            </div>
+            <div class="bento-card p-4 flex flex-col justify-center">
+              <label class="text-[10px] font-bold uppercase text-emerald-700 mb-1">Inspeksi Paspor Atlet:</label>
+              <select onchange="window.app.selectDashboardPlayer(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600">
+                ${state.players.map(function (p) {
+                  return '<option value="' + p.id + '" ' + (currentPlayer && p.id === currentPlayer.id ? 'selected' : '') + '>' + p.full_name + ' (' + p.age_group + ')</option>';
+                }).join('')}
+              </select>
+            </div>
+          </div>
+        ` : '';
+
+        if (!currentPlayer) {
+          return `
+            ${adminTopBar}
+            <div class="bento-card p-10 text-center">
+              <i data-lucide="user-plus" class="w-10 h-10 text-emerald-600 mx-auto mb-3"></i>
+              <h3 class="text-base font-extrabold text-slate-900">Belum Ada Data Atlet</h3>
+              <p class="text-xs text-slate-500 mt-1 mb-4">Silakan tambahkan data atlet terlebih dahulu melalui menu Database Atlet.</p>
+              ${isAdmin ? `<button type="button" onclick="window.app.navigate('players')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl">Kelola Database Atlet</button>` : ''}
+            </div>
+          `;
+        }
+
+        const attrs = [
+          { label: 'PAC', val: playerEval ? playerEval.pace : 82, tall: false },
+          { label: 'SHO', val: playerEval ? playerEval.shooting : 78, tall: false },
+          { label: 'PAS', val: playerEval ? playerEval.passing : 88, tall: true },
+          { label: 'DRI', val: playerEval ? playerEval.dribbling : 85, tall: true },
+          { label: 'DEF', val: playerEval ? playerEval.defending : 74, tall: false },
+          { label: 'PHY', val: playerEval ? playerEval.physical : 80, tall: false }
+        ];
+
+        const calTitle = state.calendarMonthIndex === 4 ? 'Mei 2026' : 'November 2026';
+
+        return `
+          ${adminTopBar}
+
+          <!-- 12-COLUMN CLEAN EMERALD BENTO GRID -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+            <!-- KOLOM KIRI (3 COL): PASPOR PROFIL ATLET + FOTO BESAR -->
+            <div class="lg:col-span-3 bento-card p-5 flex flex-col items-center text-center">
+              <div class="relative group w-36 h-36 sm:w-40 sm:h-40 rounded-2xl overflow-hidden shadow-md border-2 border-emerald-500/20 mb-4 bg-slate-100">
+                <img src="${currentPlayer.photo_url || 'https://placehold.co/300x300/109E72/FFFFFF?text=ATLET'}" onerror="this.src='https://placehold.co/300x300/109E72/FFFFFF?text=ATLET'" alt="${currentPlayer.full_name}" class="w-full h-full object-cover" />
+                <button type="button" onclick="window.app.openUpdatePhotoModal('${currentPlayer.id}')" class="absolute inset-x-0 bottom-0 bg-slate-900/75 text-white text-[11px] font-bold py-1.5 opacity-95 group-hover:opacity-100 transition flex items-center justify-center gap-1">
+                  <i data-lucide="camera" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  <span>Ubah Foto</span>
+                </button>
+              </div>
+
+              <h2 class="text-base font-extrabold text-slate-900 leading-snug">${currentPlayer.full_name}</h2>
+              <p class="text-xs font-medium text-slate-400 mt-0.5">Posisi ${currentPlayer.position} • Skuad ${currentPlayer.age_group}</p>
+
+              <div class="flex items-center justify-center gap-2 mt-3">
+                <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">${currentPlayer.player_code}</span>
+                <span class="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[11px]">${currentPlayer.status}</span>
+              </div>
+
+              <div class="w-full grid grid-cols-2 gap-y-3 gap-x-2 text-left mt-5 pt-5 border-t border-slate-100 text-xs">
+                <div>
+                  <div class="text-[10px] text-slate-400 font-medium">Divisi Skuad</div>
+                  <div class="font-bold text-slate-800">${currentPlayer.age_group} Elite</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-[10px] text-slate-400 font-medium">Kaki Dominan</div>
+                  <div class="font-bold text-slate-800">${currentPlayer.dominant_foot}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400 font-medium">Tinggi / Berat</div>
+                  <div class="font-bold text-slate-800">${currentPlayer.height_cm}cm / ${currentPlayer.weight_kg}kg</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-[10px] text-slate-400 font-medium">No. Punggung</div>
+                  <div class="font-bold text-emerald-600">#${currentPlayer.jersey_number}</div>
+                </div>
+              </div>
+
+              <div class="w-full mt-4 pt-3 border-t border-dashed border-slate-200 text-left bg-slate-50/70 rounded-xl p-2.5 text-[11px]">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase text-emerald-700">Otoritas Lisensi</span>
+                  ${isAdmin ? `<button type="button" onclick="window.app.navigate('settings')" class="text-[10px] text-emerald-600 font-bold underline">Edit</button>` : ''}
+                </div>
+                <div class="font-bold text-slate-800 truncate mt-0.5">${cfg.head_coach_name}</div>
+                <div class="text-[10px] text-slate-500 truncate">Head Coach (${cfg.head_coach_license})</div>
+                <div class="text-[10px] text-slate-500 truncate mt-0.5">Dir: <strong class="text-slate-700">${cfg.academy_director_name}</strong></div>
+              </div>
+
+              <div class="w-full flex items-center justify-center gap-2.5 mt-4 pt-3 border-t border-slate-100">
+                <button type="button" onclick="window.app.openUpdatePhotoModal('${currentPlayer.id}')" title="Ganti Foto Profil" class="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition">
+                  <i data-lucide="image" class="w-4 h-4"></i>
+                </button>
+                <button type="button" onclick="window.app.navigate('billing')" title="Lihat Tagihan SPP" class="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition">
+                  <i data-lucide="receipt" class="w-4 h-4"></i>
+                </button>
+                <button type="button" onclick="window.app.navigate('store')" title="Pesan Perlengkapan" class="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition">
+                  <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                </button>
+                ${isAdmin ? `
+                  <button type="button" onclick="window.app.navigate('settings')" title="Pengaturan Pelatih & Admin" class="p-2.5 rounded-xl bg-slate-900 text-white hover:bg-emerald-600 transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- KOLOM TENGAH (6 COL): RING METRIK, GRAFIK, & STORE KIT -->
+            <div class="lg:col-span-6 space-y-5">
+
+              <div class="grid grid-cols-3 gap-3.5">
+                ${createRing(ovr, 'Overall Rating', ovr, 'FIFA OVR', '#109E72')}
+                ${createRing(attendancePct, 'Kehadiran', attendancePct + '%', 'Bulan Ini', '#3B82F6')}
+                ${createRing((starScore / 5) * 100, 'Skor Evaluasi', starScore + '/5', 'Scouting', '#F59E0B')}
+              </div>
+
+              <div class="bento-card p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Ikhtisar Performa Atlet (FIFA Radar)</h3>
+                    <div class="flex items-baseline gap-2 mt-1">
+                      <span class="text-2xl font-extrabold text-slate-900">${ovr},2%</span>
+                      <span class="text-[11px] font-bold text-emerald-600">+5,2% dibanding bulan lalu</span>
+                    </div>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-semibold">
+                    ${playerEval ? playerEval.eval_period : 'Musim 2026'}
+                  </span>
+                </div>
+
+                <div class="mt-3">
+                  <svg viewBox="0 0 500 110" class="w-full h-28 overflow-visible">
+                    <defs>
+                      <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#109E72" stop-opacity="0.28"/>
+                        <stop offset="100%" stop-color="#109E72" stop-opacity="0.0"/>
+                      </linearGradient>
+                    </defs>
+                    <line x1="0" y1="25" x2="500" y2="25" stroke="#F1F5F9" stroke-width="1" />
+                    <line x1="0" y1="55" x2="500" y2="55" stroke="#F1F5F9" stroke-width="1" />
+                    <line x1="0" y1="85" x2="500" y2="85" stroke="#F1F5F9" stroke-width="1" />
+                    <path d="M 10 75 Q 90 60, 170 65 T 330 45 T 490 25 L 490 100 L 10 100 Z" fill="url(#emeraldGrad)" />
+                    <path d="M 10 75 Q 90 60, 170 65 T 330 45 T 490 25" fill="none" stroke="#109E72" stroke-width="3" stroke-linecap="round" />
+                    <circle cx="10" cy="75" r="4" fill="#109E72" />
+                    <circle cx="170" cy="65" r="4" fill="#109E72" />
+                    <circle cx="330" cy="45" r="4" fill="#109E72" />
+                    <circle cx="490" cy="25" r="5" fill="#0F2922" stroke="#109E72" stroke-width="2" />
+                  </svg>
+                  <div class="flex justify-between text-[10px] font-semibold text-slate-400 px-1 mt-1">
+                    <span>Jun</span><span>Jul</span><span>Agu</span><span>Sep</span><span>Okt</span><span>Nov</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-5 bento-card p-4 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-xs font-extrabold text-slate-900">Atribut Teknis FIFA</h4>
+                      <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Skala 100</span>
+                    </div>
+                    <div class="text-lg font-extrabold text-slate-900 mt-1">OVR ${ovr}</div>
+                  </div>
+
+                  <div class="h-36 flex items-end justify-between gap-2 pt-4 pb-1 px-1">
+                    ${attrs.map(function (a) {
+                      return `
+                        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                          <span class="text-[10px] font-extrabold text-slate-700">${a.val}</span>
+                          <div class="w-full rounded-t-lg transition-all ${a.tall ? 'bg-[#0F2922]' : 'bg-emerald-500'}" style="height: ${Math.max(20, a.val)}%"></div>
+                          <span class="text-[10px] font-bold text-slate-400">${a.label}</span>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+
+                <div class="md:col-span-7 bento-card p-4 flex flex-col justify-between">
+                  <div class="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 class="text-xs font-extrabold text-slate-900">Official Kit & Perlengkapan</h4>
+                      <p class="text-[10px] text-slate-400">Pesan & transfer langsung dari Dashboard</p>
+                    </div>
+                    ${isAdmin ? `
+                      <button type="button" onclick="window.app.openMerchModal()" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-bold">+ Posting</button>
+                    ` : `
+                      <button type="button" onclick="window.app.navigate('store')" class="text-[11px] font-bold text-emerald-600 hover:underline">Lihat Semua</button>
+                    `}
+                  </div>
+                  <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    ${merchCardsHtml}
+                  </div>
+                </div>
+              </div>
+
+              <div class="bento-card p-5">
+                <h4 class="text-xs font-extrabold text-slate-900 mb-3">Catatan Evaluasi Pelatih & Status Pesanan Kit</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-800">
+                      <span>Evaluasi: ${cfg.head_coach_name}</span>
+                      <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                      "${playerEval ? playerEval.coach_notes : 'Atlet menunjukkan disiplin tinggi dan perkembangan taktik yang konsisten.'}"
+                    </p>
+                  </div>
+                  <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-800">
+                      <span>Pesanan Perlengkapan Terakhir</span>
+                      <i data-lucide="package" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    </div>
+                    ${playerOrders.length > 0 ? `
+                      <div class="mt-1.5 text-[11px] text-slate-600">
+                        <div class="font-bold text-slate-800 truncate">${playerOrders[0].item_name} (Size ${playerOrders[0].selected_size})</div>
+                        <div class="flex items-center justify-between mt-1">
+                          <span class="font-extrabold text-emerald-600">${formatIDR(playerOrders[0].total_price)}</span>
+                          <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">${playerOrders[0].order_status}</span>
+                        </div>
+                      </div>
+                    ` : `
+                      <p class="text-[11px] text-slate-400 mt-1.5">Belum ada pesanan perlengkapan. Klik tombol "Pesan & Transfer" di atas untuk memesan jersey/kit.</p>
+                    `}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- KOLOM KANAN (3 COL): KALENDER & RINGKASAN TAGIHAN -->
+            <div class="lg:col-span-3 space-y-5">
+
+              <div class="bento-card p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-xs font-extrabold text-slate-900">${calTitle}</h4>
+                  <div class="flex items-center gap-1">
+                    <button type="button" onclick="window.app.toggleCalendarMonth()" class="p-1 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                    <button type="button" onclick="window.app.toggleCalendarMonth()" class="p-1 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1.5">
+                  <span>S</span><span>S</span><span>R</span><span>K</span><span>J</span><span>S</span><span>M</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-700">
+                  ${Array.from({ length: 30 }, function (_, i) {
+                    const d = i + 1;
+                    const isTraining = [4, 7, 12, 18, 25].indexOf(d) > -1;
+                    const isTournament = [15, 20].indexOf(d) > -1;
+                    const cls = isTournament
+                      ? 'bg-emerald-600 text-white font-extrabold rounded-lg shadow-xs'
+                      : isTraining
+                      ? 'bg-emerald-100 text-emerald-800 font-bold rounded-lg'
+                      : 'hover:bg-slate-100 rounded-lg';
+                    return '<div onclick="window.app.navigate(\'schedules\')" class="py-1.5 cursor-pointer ' + cls + '">' + d + '</div>';
+                  }).join('')}
+                </div>
+                <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                  <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Turnamen</span>
+                  <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-200"></span> Latihan</span>
+                  <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Evaluasi</span>
+                </div>
+              </div>
+
+              <!-- RINGKASAN TAGIHAN ATLET -->
+              <div class="bento-card p-5">
+                <div class="flex items-center justify-between mb-1">
+                  <h4 class="text-xs font-extrabold text-slate-900">Ringkasan Tagihan Atlet</h4>
+                  <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                    ${latestBill ? latestBill.payment_status : 'Aktif'}
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-4">${latestBill ? latestBill.period_month : 'November 2026'}</p>
+
+                <div class="space-y-2.5 text-xs">
+                  <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                    <span class="text-slate-500">SPP / Iuran Bulanan</span>
+                    <span class="font-bold text-slate-800">${formatIDR(latestBill ? latestBill.fee_amount : 350000)}</span>
+                  </div>
+                  <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                    <span class="text-slate-500">Status SPP</span>
+                    <span class="font-bold ${latestBill && (latestBill.payment_status === 'Paid' || latestBill.payment_status === 'Scholarship') ? 'text-emerald-600' : 'text-amber-600'}">
+                      ${latestBill ? latestBill.payment_status : 'Unpaid'}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                    <span class="text-slate-500">Tagihan Order Kit</span>
+                    <span class="font-bold text-slate-800">${formatIDR(pendingKitTotal)}</span>
+                  </div>
+                  <div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                    <span class="text-slate-500">Presensi Latihan</span>
+                    <span class="font-bold text-slate-800">${attendancePct}% Hadir</span>
+                  </div>
+                  <div class="flex items-center justify-between pt-2">
+                    <span class="font-extrabold text-slate-900">Total Tagihan Aktif</span>
+                    <span class="text-base font-extrabold text-emerald-600">${formatIDR(totalActiveBill)}</span>
+                  </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded-xl bg-[#E6F4F1]/70 border border-emerald-200/60 text-[11px]">
+                  <div class="font-extrabold text-emerald-950 flex items-center justify-between">
+                    <span>Rekening Transfer Resmi:</span>
+                    <button type="button" onclick="window.app.copyText('${cfg.default_bank_info}', 'Info Rekening Akademi')" class="text-emerald-700 underline font-bold">Salin</button>
+                  </div>
+                  <div class="text-emerald-900 font-semibold mt-0.5">${cfg.default_bank_info}</div>
+                  <div class="text-emerald-700 text-[10px]">Konfirmasi WA: ${cfg.whatsapp_contact}</div>
+                </div>
+
+                ${latestBill && latestBill.payment_status === 'Unpaid' ? `
+                  <button type="button" onclick="window.app.openPayBillModal('${latestBill.id}')" class="mt-3 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span>Bayar / Konfirmasi Transfer</span>
+                  </button>
+                ` : `
+                  <button type="button" onclick="window.app.navigate('billing')" class="mt-3 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span>Lihat Riwayat Tagihan</span>
+                  </button>
+                `}
+              </div>
+
+            </div>
+
+          </div>
+        `;
+      }
+
+      function selectDashboardPlayer(playerId) {
+        state.selectedDashboardPlayerId = playerId;
+        renderWorkspace();
+      }
+
+      // =================================================================
+      // MENU 2: DATABASE ATLET & PASPOR (PLAYERS)
+      // =================================================================
+      function renderPlayersView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const q = state.searchQuery;
+        const ageFilter = state.playerAgeFilter || 'ALL';
+
+        const filtered = state.players.filter(function (p) {
+          const matchAge = ageFilter === 'ALL' || p.age_group === ageFilter;
+          const matchSearch = !q ||
+            p.full_name.toLowerCase().indexOf(q) > -1 ||
+            p.player_code.toLowerCase().indexOf(q) > -1 ||
+            p.position.toLowerCase().indexOf(q) > -1;
+          return matchAge && matchSearch;
+        });
+
+        return `
+          <div class="space-y-5">
+            <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">Database Atlet & Lisensi Internasional</h2>
+                <p class="text-xs text-slate-500">Daftar skuad resmi SSB Pamanti Watatu beserta kredensial Player Passport.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                ${['ALL', 'U-10', 'U-13', 'U-15', 'U-17'].map(function (ag) {
+                  const active = ageFilter === ag;
+                  return `<button type="button" onclick="window.app.setPlayerAgeFilter('${ag}')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${active ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${ag === 'ALL' ? 'Semua Skuad' : ag}</button>`;
+                }).join('')}
+                ${isAdmin ? `
+                  <button type="button" onclick="window.app.openPlayerModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Tambah Atlet</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${filtered.length === 0 ? `
+                <div class="col-span-full bento-card p-8 text-center text-xs text-slate-400">Tidak ada data atlet yang sesuai filter pencarian.</div>
+              ` : filtered.map(function (p) {
+                return `
+                  <div class="bento-card p-5 flex flex-col justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                      <img src="${p.photo_url || 'https://placehold.co/150x150/109E72/FFFFFF?text=PW'}" onerror="this.src='https://placehold.co/150x150/109E72/FFFFFF?text=PW'" class="w-16 h-16 rounded-2xl object-cover border border-emerald-200 shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5">
+                          <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-extrabold text-[10px]">${p.age_group}</span>
+                          <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">${p.player_code}</span>
+                        </div>
+                        <h3 class="text-sm font-extrabold text-slate-900 truncate mt-1">${p.full_name}</h3>
+                        <p class="text-xs text-slate-500">Posisi <strong>${p.position}</strong> • Punggung <strong>#${p.jersey_number}</strong></p>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
+                      <div class="bg-slate-50 rounded-xl p-2">
+                        <div class="text-[10px] text-slate-400">Kaki</div>
+                        <div class="font-bold text-slate-800">${p.dominant_foot}</div>
+                      </div>
+                      <div class="bg-slate-50 rounded-xl p-2">
+                        <div class="text-[10px] text-slate-400">Fisik</div>
+                        <div class="font-bold text-slate-800">${p.height_cm}cm/${p.weight_kg}kg</div>
+                      </div>
+                      <div class="bg-slate-50 rounded-xl p-2">
+                        <div class="text-[10px] text-slate-400">Status</div>
+                        <div class="font-bold text-emerald-700">${p.status}</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <button type="button" onclick="window.app.selectDashboardPlayer('${p.id}'); window.app.navigate('dashboard');" class="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1">
+                        <i data-lucide="id-card" class="w-3.5 h-3.5"></i>
+                        <span>Lihat Paspor</span>
+                      </button>
+                      <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="window.app.openUpdatePhotoModal('${p.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs">Foto</button>
+                        ${isAdmin ? `
+                          <button type="button" onclick="window.app.openPlayerModal('${p.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">Edit</button>
+                          <button type="button" onclick="window.app.deletePlayer('${p.id}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // =================================================================
+      // MENU 3: OFFICIAL KIT & MERCHANDISE STORE (STORE)
+      // =================================================================
+      function renderMerchandiseView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const q = state.searchQuery;
+        const filteredMerch = state.merchandise.filter(function (m) {
+          return !q || m.item_name.toLowerCase().indexOf(q) > -1 || m.category.toLowerCase().indexOf(q) > -1;
+        });
+
+        const visibleOrders = isAdmin
+          ? state.merchandise_orders
+          : state.merchandise_orders.filter(function (o) {
+              return state.currentUser && o.player_id === state.currentUser.data.id;
+            });
+
+        return `
+          <div class="space-y-6">
+            <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">Official Kit & Academy Merchandise Store</h2>
+                <p class="text-xs text-slate-500">Pesan perlengkapan latihan dan tanding resmi SSB Pamanti Watatu dengan pembayaran transfer langsung.</p>
+              </div>
+              ${isAdmin ? `
+                <button type="button" onclick="window.app.openMerchModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm self-start sm:self-auto">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>Posting Perlengkapan Baru</span>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Katalog Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${filteredMerch.map(function (item) {
+                return `
+                  <div class="bento-card overflow-hidden flex flex-col justify-between">
+                    <div>
+                      <div class="h-44 bg-slate-100 relative overflow-hidden">
+                        <img src="${item.image_url}" onerror="this.src='https://placehold.co/400x300/109E72/FFFFFF?text=KIT'" class="w-full h-full object-cover" />
+                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-900/80 text-white font-bold text-[10px] uppercase">${item.category}</span>
+                      </div>
+                      <div class="p-4">
+                        <h3 class="text-sm font-extrabold text-slate-900">${item.item_name}</h3>
+                        <div class="text-lg font-extrabold text-emerald-600 mt-1">${formatIDR(item.price)}</div>
+                        <div class="text-xs text-slate-500 mt-2 space-y-1">
+                          <div>Ukuran Tersedia: <strong class="text-slate-800">${item.sizes}</strong></div>
+                          <div>Stok Akademi: <strong class="text-slate-800">${item.stock} pcs</strong></div>
+                          <div class="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg mt-2">
+                            <i data-lucide="landmark" class="w-3.5 h-3.5 inline mr-1"></i>${item.bank_info}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="p-4 pt-0 flex items-center gap-2">
+                      <button type="button" onclick="window.app.openOrderMerchModal('${item.id}')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                        <span>Pesan & Transfer</span>
+                      </button>
+                      ${isAdmin ? `
+                        <button type="button" onclick="window.app.openMerchModal('${item.id}')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="window.app.deleteMerch('${item.id}')" class="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Tabel Pesanan Perlengkapan & Verifikasi Transfer -->
+            <div class="bento-card p-5">
+              <h3 class="text-sm font-extrabold text-slate-900 mb-3">${isAdmin ? 'Daftar Pesanan Masuk & Verifikasi Bukti Transfer' : 'Riwayat Pesanan Perlengkapan Saya'}</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-100 text-slate-400 uppercase text-[10px]">
+                      <th class="py-2.5 px-3">Pemesan / Atlet</th>
+                      <th class="py-2.5 px-3">Perlengkapan</th>
+                      <th class="py-2.5 px-3">Ukuran & Qty</th>
+                      <th class="py-2.5 px-3">Total Transfer</th>
+                      <th class="py-2.5 px-3">Bukti / Ref Transfer</th>
+                      <th class="py-2.5 px-3">Status</th>
+                      ${isAdmin ? '<th class="py-2.5 px-3 text-right">Verifikasi Admin</th>' : ''}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${visibleOrders.length === 0 ? `
+                      <tr><td colspan="7" class="py-6 text-center text-slate-400">Belum ada transaksi pemesanan perlengkapan.</td></tr>
+                    ` : visibleOrders.map(function (ord) {
+                      return `
+                        <tr class="hover:bg-slate-50/70">
+                          <td class="py-3 px-3 font-bold text-slate-900">${ord.player_name}</td>
+                          <td class="py-3 px-3 font-semibold text-slate-700">${ord.item_name}</td>
+                          <td class="py-3 px-3">Size <strong>${ord.selected_size}</strong> × ${ord.qty}</td>
+                          <td class="py-3 px-3 font-extrabold text-emerald-600">${formatIDR(ord.total_price)}</td>
+                          <td class="py-3 px-3 text-slate-600">${ord.payment_proof}</td>
+                          <td class="py-3 px-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${ord.order_status === 'Paid' || ord.order_status === 'Completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${ord.order_status}</span>
+                          </td>
+                          ${isAdmin ? `
+                            <td class="py-3 px-3 text-right space-x-1">
+                              <button type="button" onclick="window.app.updateOrderStatus('${ord.id}', 'Paid')" class="px-2 py-1 rounded bg-emerald-600 text-white font-bold text-[10px]">Set Paid</button>
+                              <button type="button" onclick="window.app.updateOrderStatus('${ord.id}', 'Completed')" class="px-2 py-1 rounded bg-slate-800 text-white font-bold text-[10px]">Selesai</button>
+                              <button type="button" onclick="window.app.deleteOrder('${ord.id}')" class="px-2 py-1 rounded bg-rose-50 text-rose-600 font-bold text-[10px]">Hapus</button>
+                            </td>
+                          ` : ''}
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // =================================================================
+      // MENU 4: RAPOR & PERFORMA STANDAR FIFA (EVALUATIONS)
+      // =================================================================
+      function renderEvaluationsView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const cfg = state.academy_settings;
+        const list = isAdmin
+          ? state.evaluations
+          : state.evaluations.filter(function (e) {
+              return state.currentUser && e.player_id === state.currentUser.data.id;
+            });
+
+        return `
+          <div class="space-y-5">
+            <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">Technical & Scouting Radar (Standar FIFA)</h2>
+                <p class="text-xs text-slate-500">Evaluasi berkala 6 indikator performa atlet oleh Head Coach <strong>${cfg.head_coach_name}</strong>.</p>
+              </div>
+              ${isAdmin ? `
+                <button type="button" onclick="window.app.openEvalModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Input Rapor Evaluasi</span>
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${list.map(function (ev) {
+                const pl = state.players.find(function (p) { return p.id === ev.player_id; });
+                return `
+                  <div class="bento-card p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex flex-col items-center justify-center font-extrabold leading-none">
+                          <span class="text-base">${ev.overall_rating}</span>
+                          <span class="text-[9px] uppercase">OVR</span>
+                        </div>
+                        <div>
+                          <h3 class="text-sm font-extrabold text-slate-900">${pl ? pl.full_name : 'Atlet Akademi'}</h3>
+                          <p class="text-[11px] text-slate-400">${ev.eval_period} • Penilai: ${cfg.head_coach_name}</p>
+                        </div>
+                      </div>
+                      ${isAdmin ? `
+                        <div class="flex items-center gap-1">
+                          <button type="button" onclick="window.app.openEvalModal('${ev.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Edit</button>
+                          <button type="button" onclick="window.app.deleteEval('${ev.id}')" class="p-1.5 rounded-lg bg-rose-50 text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                      ` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>PAC</span><strong class="text-emerald-700">${ev.pace}</strong></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>SHO</span><strong class="text-emerald-700">${ev.shooting}</strong></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>PAS</span><strong class="text-emerald-700">${ev.passing}</strong></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>DRI</span><strong class="text-emerald-700">${ev.dribbling}</strong></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>DEF</span><strong class="text-emerald-700">${ev.defending}</strong></div>
+                      <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between"><span>PHY</span><strong class="text-emerald-700">${ev.physical}</strong></div>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-[#E6F4F1]/60 text-xs text-slate-700">
+                      <strong class="text-emerald-900">Catatan Taktikal Pelatih:</strong> "${ev.coach_notes}"
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // =================================================================
+      // MENU 5: JADWAL LATIHAN & TURNAMEN INTERNASIONAL (SCHEDULES)
+      // =================================================================
+      function renderSchedulesView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        return `
+          <div class="space-y-5">
+            <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">Match & Training Center</h2>
+                <p class="text-xs text-slate-500">Agenda latihan taktikal, laga uji coba (Friendly Match), dan turnamen resmi.</p>
+              </div>
+              ${isAdmin ? `
+                <button type="button" onclick="window.app.openScheduleModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                  <span>Tambah Agenda Baru</span>
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${state.schedules.map(function (s) {
+                return `
+                  <div class="bento-card p-5 flex flex-col justify-between gap-3">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-extrabold text-[10px] uppercase">${s.event_type} • ${s.age_group}</span>
+                        <span class="text-xs font-bold text-slate-500">${s.event_date} • ${s.event_time}</span>
+                      </div>
+                      <h3 class="text-sm font-extrabold text-slate-900 mt-2">${s.title}</h3>
+                      <div class="text-xs text-slate-500 mt-2 space-y-1">
+                        <div><i data-lucide="map-pin" class="w-3.5 h-3.5 inline text-emerald-600 mr-1"></i>Lokasi: <strong>${s.venue}</strong></div>
+                        <div><i data-lucide="shield" class="w-3.5 h-3.5 inline text-emerald-600 mr-1"></i>Lawan / Partner: <strong>${s.opponent}</strong></div>
+                      </div>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-extrabold text-xs">Hasil: ${s.match_result}</span>
+                      ${isAdmin ? `
+                        <div class="flex items-center gap-1.5">
+                          <button type="button" onclick="window.app.openScheduleModal('${s.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Edit</button>
+                          <button type="button" onclick="window.app.deleteSchedule('${s.id}')" class="p-1.5 rounded-lg bg-rose-50 text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // =================================================================
+      // MENU 6: TAGIHAN SPP & PRESENSI ATLET (BILLING)
+      // =================================================================
+      function renderBillingView() {
+        const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+        const cfg = state.academy_settings;
+        const list = isAdmin
+          ? state.billing
+          : state.billing.filter(function (b) {
+              return state.currentUser && b.player_id === state.currentUser.data.id;
+            });
+
+        return `
+          <div class="space-y-5">
+            <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">Tagihan SPP, Beasiswa & Rekap Presensi</h2>
+                <p class="text-xs text-slate-500">Rekening Resmi Akademi: <strong class="text-emerald-700">${cfg.default_bank_info}</strong> (Manajer Keuangan: ${cfg.finance_manager_name})</p>
+              </div>
+              ${isAdmin ? `
+                <button type="button" onclick="window.app.openBillingModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>Terbitkan Tagihan SPP</span>
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="bento-card p-5 overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-slate-100 text-slate-400 uppercase text-[10px]">
+                    <th class="py-3 px-3">Atlet</th>
+                    <th class="py-3 px-3">Periode Bulan</th>
+                    <th class="py-3 px-3">Presensi</th>
+                    <th class="py-3 px-3">Nominal SPP</th>
+                    <th class="py-3 px-3">Status</th>
+                    <th class="py-3 px-3">Bukti / Referensi Transfer</th>
+                    <th class="py-3 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${list.map(function (b) {
+                    const pl = state.players.find(function (p) { return p.id === b.player_id; });
+                    return `
+                      <tr class="hover:bg-slate-50/80">
+                        <td class="py-3 px-3 font-extrabold text-slate-900">${pl ? pl.full_name : 'Atlet'}</td>
+                        <td class="py-3 px-3 font-semibold text-slate-700">${b.period_month}</td>
+                        <td class="py-3 px-3 font-bold text-emerald-700">${b.attendance_pct}% Hadir</td>
+                        <td class="py-3 px-3 font-extrabold text-slate-900">${formatIDR(b.fee_amount)}</td>
+                        <td class="py-3 px-3">
+                          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${b.payment_status === 'Paid' || b.payment_status === 'Scholarship' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${b.payment_status}</span>
+                        </td>
+                        <td class="py-3 px-3 text-slate-500">${b.transfer_ref || '-'}</td>
+                        <td class="py-3 px-3 text-right space-x-1">
+                          ${b.payment_status === 'Unpaid' ? `
+                            <button type="button" onclick="window.app.openPayBillModal('${b.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">Transfer / Konfirmasi SPP</button>
+                          ` : ''}
+                          ${isAdmin && b.payment_status === 'Waiting Verification' ? `
+                            <button type="button" onclick="window.app.approveBillPayment('${b.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-700 text-white font-bold text-[11px]">Set Lunas (Paid)</button>
+                          ` : ''}
+                          ${isAdmin ? `
+                            <button type="button" onclick="window.app.openBillingModal('${b.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px]">Edit</button>
+                            <button type="button" onclick="window.app.deleteBilling('${b.id}')" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600 font-bold text-[11px]">Hapus</button>
+                          ` : ''}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      // =================================================================
+      // MENU 7 (KHUSUS ADMIN): PENGATURAN AKADEMI, PELATIH & ADMIN
+      // =================================================================
+      function switchSettingsTab(tabId) {
+        state.activeSettingsTab = tabId;
+        renderWorkspace();
+      }
+
+      function renderSettingsView() {
+        if (!state.currentUser || state.currentUser.role !== 'admin') {
+          return `<div class="bento-card p-10 text-center text-xs text-rose-600 font-bold">Akses Ditolak. Halaman ini khusus Admin & Manajemen Akademi.</div>`;
+        }
+
+        const cfg = state.academy_settings;
+        const activeTab = state.activeSettingsTab || 'profile';
+
+        return `
+          <div class="space-y-5">
+            <div class="bento-card p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-extrabold uppercase mb-1">
+                  <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                  <span>Executive Control Center</span>
+                </div>
+                <h2 class="text-base font-extrabold text-slate-900">Pengaturan Akademi, Head Coach, Director & Manajemen Admin</h2>
+                <p class="text-xs text-slate-500">Kelola identitas pimpinan akademi, daftar pelatih kelompok umur, dan tambah akun login Admin baru.</p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl shrink-0">
+                <button type="button" onclick="window.app.switchSettingsTab('profile')" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  activeTab === 'profile' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }">
+                  <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                  <span>1. Head Coach & Director</span>
+                </button>
+                <button type="button" onclick="window.app.switchSettingsTab('coaches')" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  activeTab === 'coaches' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }">
+                  <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                  <span>2. Daftar Pelatih & Staf (${state.staff_admins.length})</span>
+                </button>
+                <button type="button" onclick="window.app.switchSettingsTab('admins')" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  activeTab === 'admins' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                  <span>3. Akun Admin & Akses Login</span>
+                </button>
+              </div>
+            </div>
+
+            ${activeTab === 'profile' ? `
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                <div class="lg:col-span-4 bento-card p-5 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded bg-emerald-50 text-emerald-700">Live Preview Otoritas</span>
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  </div>
+                  <div class="flex items-center gap-3.5">
+                    <img id="settings-preview-hc-img" src="${cfg.head_coach_photo}" onerror="this.src='https://placehold.co/150x150/109E72/FFFFFF?text=HC'" class="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500/30 shrink-0" />
+                    <div class="min-w-0">
+                      <div class="text-[10px] font-bold text-emerald-600 uppercase">Head Coach Aktif</div>
+                      <h3 class="text-sm font-extrabold text-slate-900 truncate">${cfg.head_coach_name}</h3>
+                      <p class="text-[11px] text-slate-500 truncate">${cfg.head_coach_license}</p>
+                    </div>
+                  </div>
+                  <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Nama Akademi:</span>
+                      <span class="font-extrabold text-slate-800">${cfg.academy_name}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Academy Director:</span>
+                      <span class="font-extrabold text-emerald-700">${cfg.academy_director_name}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Manajer Keuangan:</span>
+                      <span class="font-bold text-slate-700">${cfg.finance_manager_name}</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/70">
+                      <div class="text-[10px] text-slate-400">Rekening Default Checkout & SPP:</div>
+                      <div class="font-bold text-slate-800 mt-0.5">${cfg.default_bank_info}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <form onsubmit="window.app.saveAcademySettings(event)" class="lg:col-span-8 bento-card p-6 space-y-4 text-xs">
+                  <div class="border-b border-slate-100 pb-3 mb-2">
+                    <h3 class="text-sm font-extrabold text-slate-900">Ubah Nama Pelatih Kepala (Head Coach), Direktur Akademi & Rekening</h3>
+                    <p class="text-[11px] text-slate-400">Perubahan langsung diperbarui seketika di Header, Sidebar, Paspor Atlet, Rapor Evaluasi, dan Tagihan.</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Nama Resmi Akademi</label>
+                      <input type="text" id="cfg-academy-name" value="${cfg.academy_name}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Slogan / Standar Lisensi Akademi</label>
+                      <input type="text" id="cfg-slogan" value="${cfg.slogan}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                      <label class="block font-bold text-emerald-800 mb-1">Nama Pelatih Kepala (Head Coach)</label>
+                      <input type="text" id="cfg-hc-name" value="${cfg.head_coach_name}" required class="w-full px-3.5 py-2.5 bg-emerald-50/40 border border-emerald-300 rounded-xl font-extrabold text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-emerald-800 mb-1">Lisensi Kepelatihan Head Coach</label>
+                      <input type="text" id="cfg-hc-license" value="${cfg.head_coach_license}" required class="w-full px-3.5 py-2.5 bg-emerald-50/40 border border-emerald-300 rounded-xl font-bold focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block font-bold text-emerald-800 mb-1">Nama Direktur Akademi (Academy Director)</label>
+                      <input type="text" id="cfg-director-name" value="${cfg.academy_director_name}" required class="w-full px-3.5 py-2.5 bg-emerald-50/40 border border-emerald-300 rounded-xl font-extrabold text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Nama Manajer Operasional / Keuangan</label>
+                      <input type="text" id="cfg-finance-name" value="${cfg.finance_manager_name}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-emerald-600 focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-100">
+                    <label class="block font-bold text-slate-700 mb-1">Foto Profil Head Coach (URL atau Upload File)</label>
+                    <div class="flex gap-2">
+                      <input type="text" id="cfg-hc-photo" value="${cfg.head_coach_photo}" class="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl" />
+                      <label class="cursor-pointer px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl shrink-0 flex items-center gap-1.5">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        <span>Upload Foto</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="window.app.handleImageFileUpload(this, 'cfg-hc-photo', 'settings-preview-hc-img')" />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Rekening Bank Resmi Akademi (SPP & Kit Store)</label>
+                      <input type="text" id="cfg-bank-info" value="${cfg.default_bank_info}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Konfirmasi Admin</label>
+                      <input type="text" id="cfg-wa" value="${cfg.whatsapp_contact}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                    </div>
+                  </div>
+
+                  <div class="pt-3 flex justify-end">
+                    <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+                      <i data-lucide="save" class="w-4 h-4"></i>
+                      <span>Simpan Perubahan Pengaturan Akademi</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ` : ''}
+
+            ${activeTab === 'coaches' ? `
+              <div class="space-y-4">
+                <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Struktur Tim Kepelatihan & Staf SSB Pamanti Watatu</h3>
+                    <p class="text-xs text-slate-500">Tambah atau ganti pelatih kelompok umur (Head Coach, Academy Director, Coach U-10 s/d U-17, Goalkeeper Coach).</p>
+                  </div>
+                  <button type="button" onclick="window.app.openStaffModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Tambah Pelatih / Staf Baru</span>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${state.staff_admins.map(function (st) {
+                    return `
+                      <div class="bento-card p-5 flex flex-col justify-between gap-4">
+                        <div>
+                          <div class="flex items-center gap-3.5">
+                            <img src="${st.photo_url || 'https://placehold.co/120x120/109E72/FFFFFF?text=COACH'}" onerror="this.src='https://placehold.co/120x120/109E72/FFFFFF?text=COACH'" class="w-16 h-16 rounded-2xl object-cover border border-emerald-200 shrink-0" />
+                            <div class="min-w-0">
+                              <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-extrabold text-[10px] uppercase">${st.role_title} • ${st.squad_group}</span>
+                              <h4 class="text-sm font-extrabold text-slate-900 truncate mt-1">${st.full_name}</h4>
+                              <p class="text-[11px] font-semibold text-slate-500 truncate">${st.license}</p>
+                            </div>
+                          </div>
+                          <div class="mt-4 pt-3 border-t border-slate-100 text-xs space-y-1 text-slate-600">
+                            <div class="flex justify-between"><span>Kontak WA:</span><strong class="text-slate-800">${st.phone || '-'}</strong></div>
+                            <div class="flex justify-between"><span>Email Login:</span><strong class="text-slate-800 truncate">${st.email}</strong></div>
+                            <div class="flex justify-between"><span>Level Akses:</span><strong class="text-emerald-700">${st.access_level}</strong></div>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                          <button type="button" onclick="window.app.promoteToHeadCoach('${st.id}')" class="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>Jadikan Head Coach Utama
+                          </button>
+                          <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="window.app.openStaffModal('${st.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-700 font-bold text-xs">Edit</button>
+                            <button type="button" onclick="window.app.deleteStaff('${st.id}')" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${activeTab === 'admins' ? `
+              <div class="space-y-4">
+                <div class="bento-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Manajemen Akun Login Admin & Pelatih</h3>
+                    <p class="text-xs text-slate-500">Setiap akun di bawah ini dapat langsung login di tab <strong>"Manajemen / Pelatih"</strong> menggunakan Email & Password yang didaftarkan.</p>
+                  </div>
+                  <button type="button" onclick="window.app.openStaffModal()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+                    <i data-lucide="shield-plus" class="w-4 h-4"></i>
+                    <span>Tambah Akun Admin Baru</span>
+                  </button>
+                </div>
+
+                <div class="bento-card p-5 overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr class="border-b border-slate-100 text-slate-400 uppercase text-[10px]">
+                        <th class="py-3 px-3">Nama Admin / Pelatih</th>
+                        <th class="py-3 px-3">Jabatan & Skuad</th>
+                        <th class="py-3 px-3">Email Login</th>
+                        <th class="py-3 px-3">Password Login</th>
+                        <th class="py-3 px-3">Level Akses</th>
+                        <th class="py-3 px-3">Status</th>
+                        <th class="py-3 px-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${state.staff_admins.map(function (adm) {
+                        return `
+                          <tr class="hover:bg-slate-50/80">
+                            <td class="py-3 px-3 font-extrabold text-slate-900 flex items-center gap-2.5">
+                              <img src="${adm.photo_url || 'https://placehold.co/80x80/109E72/FFFFFF?text=AD'}" class="w-8 h-8 rounded-full object-cover" />
+                              <span>${adm.full_name}</span>
+                            </td>
+                            <td class="py-3 px-3 font-semibold text-slate-700">${adm.role_title} (${adm.squad_group})</td>
+                            <td class="py-3 px-3 font-bold text-emerald-700">${adm.email}</td>
+                            <td class="py-3 px-3 font-mono text-slate-600">${adm.password}</td>
+                            <td class="py-3 px-3">
+                              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-[10px]">${adm.access_level}</span>
+                            </td>
+                            <td class="py-3 px-3">
+                              <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">${adm.status}</span>
+                            </td>
+                            <td class="py-3 px-3 text-right space-x-1">
+                              <button type="button" onclick="window.app.openStaffModal('${adm.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-700 font-bold text-[11px]">Edit Akun</button>
+                              <button type="button" onclick="window.app.deleteStaff('${adm.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[11px]">Hapus</button>
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // Simpan Pengaturan Profil Akademi, Head Coach & Academy Director
+      async function saveAcademySettings(e) {
+        if (e) e.preventDefault();
+        const payload = {
+          academy_name: document.getElementById('cfg-academy-name').value.trim(),
+          slogan: document.getElementById('cfg-slogan').value.trim(),
+          head_coach_name: document.getElementById('cfg-hc-name').value.trim(),
+          head_coach_license: document.getElementById('cfg-hc-license').value.trim(),
+          academy_director_name: document.getElementById('cfg-director-name').value.trim(),
+          finance_manager_name: document.getElementById('cfg-finance-name').value.trim(),
+          head_coach_photo: document.getElementById('cfg-hc-photo').value.trim() || 'https://placehold.co/150x150/109E72/FFFFFF?text=HC',
+          default_bank_info: document.getElementById('cfg-bank-info').value.trim(),
+          whatsapp_contact: document.getElementById('cfg-wa').value.trim()
+        };
+
+        state.academy_settings = Object.assign({}, state.academy_settings, payload);
+
+        if (state.currentUser && state.currentUser.role === 'admin') {
+          state.currentUser.data.full_name = payload.head_coach_name;
+          state.currentUser.data.photo_url = payload.head_coach_photo;
+          state.currentUser.data.role_title = 'Head Coach • Dir: ' + payload.academy_director_name;
+        }
+
+        if (!IS_PREVIEW && supabaseClient) {
+          const res = await supabaseClient
+            .from('academy_settings')
+            .upsert([Object.assign({ id: state.academy_settings.id || 'cfg-1' }, payload)]);
+          if (res.error) return showToast('Gagal menyimpan ke Supabase: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+
+        updateHeaderUserProfile();
+        renderWorkspace();
+        showToast('Profil Head Coach, Academy Director & Pengaturan berhasil diperbarui!');
+      }
+
+      function openStaffModal(staffId) {
+        const st = staffId ? state.staff_admins.find(function (x) { return x.id === staffId; }) : null;
+        openModal(st ? 'Edit Data Pelatih / Akun Admin' : 'Tambah Pelatih / Akun Admin Baru', `
+          <form onsubmit="window.app.saveStaff(event, '${st ? st.id : ''}')" class="space-y-3.5 text-xs">
+            <div class="flex items-center gap-3">
+              <img id="preview-staff-photo" src="${st && st.photo_url ? st.photo_url : 'https://placehold.co/120x120/109E72/FFFFFF?text=STAF'}" class="w-16 h-16 rounded-2xl object-cover border border-slate-200 shrink-0" />
+              <div class="flex-1">
+                <label class="block font-bold text-slate-700 mb-1">Foto Pelatih / Admin (URL atau Upload)</label>
+                <div class="flex gap-2">
+                  <input type="text" id="st-photo" value="${st && st.photo_url ? st.photo_url : ''}" placeholder="https://..." class="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl" />
+                  <label class="cursor-pointer px-3 py-1.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl shrink-0">
+                    Upload
+                    <input type="file" accept="image/*" class="hidden" onchange="window.app.handleImageFileUpload(this, 'st-photo', 'preview-staff-photo')" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Pelatih / Admin</label>
+              <input type="text" id="st-name" value="${st ? st.full_name : ''}" required placeholder="Contoh: Coach Budi Santoso" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Jabatan (Role)</label>
+                <select id="st-role" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold">
+                  ${['Head Coach', 'Academy Director', 'Age Group Coach', 'Assistant Coach', 'Goalkeeper Coach', 'Fitness & Physio', 'Admin Keuangan'].map(function (r) {
+                    return '<option value="' + r + '" ' + (st && st.role_title === r ? 'selected' : '') + '>' + r + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Skuad Kelompok Umur</label>
+                <select id="st-squad" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold">
+                  ${['All Squad', 'U-10', 'U-13', 'U-15', 'U-17'].map(function (g) {
+                    return '<option value="' + g + '" ' + (st && st.squad_group === g ? 'selected' : '') + '>' + g + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Lisensi Kepelatihan / Keahlian</label>
+                <input type="text" id="st-license" value="${st ? st.license : 'AFC B Diploma'}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">No. WhatsApp Aktif</label>
+                <input type="text" id="st-phone" value="${st ? st.phone : '0812-'}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div class="text-[10px] font-extrabold uppercase text-emerald-700">Kredensial Login Panel Admin</div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Email Login Admin</label>
+                  <input type="email" id="st-email" value="${st ? st.email : ''}" required placeholder="nama@pamantiwatatu.id" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Password Login</label>
+                  <input type="text" id="st-pass" value="${st ? st.password : '123456'}" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Hak Akses Sistem</label>
+                  <select id="st-access" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl">
+                    ${['Super Admin', 'Coach Admin', 'Finance Admin'].map(function (a) {
+                      return '<option value="' + a + '" ' + (st && st.access_level === a ? 'selected' : '') + '>' + a + '</option>';
+                    }).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Status Aktif</label>
+                  <select id="st-status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl">
+                    ${['Active', 'Inactive'].map(function (s) {
+                      return '<option value="' + s + '" ' + (st && st.status === s ? 'selected' : '') + '>' + s + '</option>';
+                    }).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-md">
+              Simpan Data Pelatih & Akun Admin
+            </button>
+          </form>
+        `);
+      }
+
+      async function saveStaff(e, id) {
+        if (e) e.preventDefault();
+        const payload = {
+          full_name: document.getElementById('st-name').value.trim(),
+          role_title: document.getElementById('st-role').value,
+          squad_group: document.getElementById('st-squad').value,
+          license: document.getElementById('st-license').value.trim(),
+          phone: document.getElementById('st-phone').value.trim(),
+          email: document.getElementById('st-email').value.trim(),
+          password: document.getElementById('st-pass').value.trim(),
+          access_level: document.getElementById('st-access').value,
+          status: document.getElementById('st-status').value,
+          photo_url: document.getElementById('st-photo').value.trim() || 'https://placehold.co/120x120/109E72/FFFFFF?text=COACH'
+        };
+
+        if (payload.role_title === 'Head Coach') {
+          state.academy_settings.head_coach_name = payload.full_name;
+          state.academy_settings.head_coach_license = payload.license;
+          state.academy_settings.head_coach_photo = payload.photo_url;
+        } else if (payload.role_title === 'Academy Director') {
+          state.academy_settings.academy_director_name = payload.full_name;
+        }
+
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.staff_admins.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.staff_admins[idx] = Object.assign({}, state.staff_admins[idx], payload);
+          } else {
+            state.staff_admins.push(Object.assign({ id: 'adm-' + Date.now() }, payload));
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('staff_admins').update(payload).eq('id', id)
+            : await supabaseClient.from('staff_admins').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan staf/admin: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+
+        updateHeaderUserProfile();
+        closeModal();
+        renderWorkspace();
+        showToast('Data Pelatih / Admin berhasil disimpan!');
+      }
+
+      async function promoteToHeadCoach(staffId) {
+        const st = state.staff_admins.find(function (x) { return x.id === staffId; });
+        if (!st) return;
+        state.academy_settings.head_coach_name = st.full_name;
+        state.academy_settings.head_coach_license = st.license;
+        state.academy_settings.head_coach_photo = st.photo_url;
+
+        if (!IS_PREVIEW && supabaseClient) {
+          await supabaseClient.from('academy_settings').upsert([Object.assign({ id: state.academy_settings.id || 'cfg-1' }, state.academy_settings)]);
+          await fetchAllSupabaseData();
+        }
+        updateHeaderUserProfile();
+        renderWorkspace();
+        showToast(st.full_name + ' ditetapkan sebagai Head Coach Utama!');
+      }
+
+      async function deleteStaff(id) {
+        if (state.staff_admins.length <= 1) {
+          return showToast('Minimal harus ada 1 akun Admin aktif di sistem!', 'error');
+        }
+        if (IS_PREVIEW) {
+          state.staff_admins = state.staff_admins.filter(function (s) { return s.id !== id; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('staff_admins').delete().eq('id', id);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Akun pelatih/admin dihapus.');
+      }
+
+      // =================================================================
+      // MODAL DIALOGS & CRUD OPERATIONS
+      // =================================================================
+      function openModal(title, htmlContent) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').innerHTML = htmlContent;
+        document.getElementById('modal-backdrop').classList.remove('hidden');
+        refreshIcons();
+      }
+
+      function closeModal() {
+        document.getElementById('modal-backdrop').classList.add('hidden');
+      }
+
+      function openUpdatePhotoModal(playerId) {
+        const p = state.players.find(function (x) { return x.id === playerId; });
+        if (!p) return;
+        openModal('Perbarui Foto Paspor — ' + p.full_name, `
+          <form onsubmit="window.app.savePhotoUpdate(event, '${p.id}')" class="space-y-4 text-xs">
+            <div class="flex flex-col items-center gap-3">
+              <img id="preview-quick-photo" src="${p.photo_url || 'https://placehold.co/200x200/109E72/FFFFFF?text=FOTO'}" class="w-28 h-28 rounded-2xl object-cover border-2 border-emerald-500/30" />
+              <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition inline-flex items-center gap-1.5">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <span>Pilih Foto dari HP / Komputer</span>
+                <input type="file" accept="image/*" class="hidden" onchange="window.app.handleImageFileUpload(this, 'input-quick-photo-url', 'preview-quick-photo')" />
+              </label>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Atau Tempel URL Foto</label>
+              <input type="text" id="input-quick-photo-url" value="${p.photo_url || ''}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">Simpan Foto Paspor</button>
+          </form>
+        `);
+      }
+
+      async function savePhotoUpdate(e, playerId) {
+        if (e) e.preventDefault();
+        const photo_url = document.getElementById('input-quick-photo-url').value.trim();
+        if (IS_PREVIEW) {
+          const idx = state.players.findIndex(function (p) { return p.id === playerId; });
+          if (idx > -1) state.players[idx].photo_url = photo_url;
+          if (state.currentUser && state.currentUser.role === 'player' && state.currentUser.data.id === playerId) {
+            state.currentUser.data.photo_url = photo_url;
+          }
+        } else if (supabaseClient) {
+          const res = await supabaseClient.from('players').update({ photo_url: photo_url }).eq('id', playerId);
+          if (res.error) return showToast('Gagal menyimpan foto: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        updateHeaderUserProfile();
+        closeModal();
+        renderWorkspace();
+        showToast('Foto paspor atlet berhasil diperbarui!');
+      }
+
+      function openOrderMerchModal(merchId) {
+        const item = state.merchandise.find(function (m) { return m.id === merchId; });
+        if (!item) return;
+        const currentPlayer = state.currentUser && state.currentUser.role === 'player'
+          ? state.currentUser.data
+          : (state.players.find(function (p) { return p.id === state.selectedDashboardPlayerId; }) || state.players[0]);
+
+        const sizeOptions = (item.sizes || 'S, M, L, XL').split(',').map(function (s) { return s.trim(); });
+
+        openModal('Pesan Perlengkapan & Transfer Pembayaran', `
+          <form onsubmit="window.app.submitMerchOrder(event, '${item.id}')" class="space-y-4 text-xs">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <img src="${item.image_url}" class="w-16 h-16 rounded-xl object-cover shrink-0" />
+              <div>
+                <div class="font-extrabold text-slate-900 text-sm">${item.item_name}</div>
+                <div class="font-extrabold text-emerald-600 text-sm mt-0.5">${formatIDR(item.price)} / pcs</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Pilih Ukuran</label>
+                <select id="order-size" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold">
+                  ${sizeOptions.map(function (s) { return '<option value="' + s + '">' + s + '</option>'; }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Jumlah (Qty)</label>
+                <input type="number" id="order-qty" value="1" min="1" max="${item.stock}" oninput="document.getElementById('order-total-display').textContent = window.app.formatIDR(this.value * ${item.price})" required class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold" />
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-[#E6F4F1] border border-emerald-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-emerald-900">Total Nominal Transfer:</span>
+                <span id="order-total-display" class="text-base font-extrabold text-emerald-700">${formatIDR(item.price)}</span>
+              </div>
+              <div class="text-[11px] font-bold text-slate-800 pt-1 border-t border-emerald-200/60 flex items-center justify-between">
+                <span>Transfer ke: ${item.bank_info}</span>
+                <button type="button" onclick="window.app.copyText('${item.bank_info}', 'Rekening Akademi')" class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px]">Salin Rek</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Pemesan / Atlet</label>
+              <input type="text" id="order-player-name" value="${currentPlayer ? currentPlayer.full_name : ''}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50" />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Bukti / Referensi Transfer Bank (Nama Pengirim & Bank)</label>
+              <input type="text" id="order-payment-proof" required placeholder="Contoh: Sudah TF via BRI a.n Budi - Ref 992817" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md">
+              Kirim Pesanan & Konfirmasi Transfer
+            </button>
+          </form>
+        `);
+      }
+
+      async function submitMerchOrder(e, merchId) {
+        if (e) e.preventDefault();
+        const item = state.merchandise.find(function (m) { return m.id === merchId; });
+        if (!item) return;
+
+        const currentPlayer = state.currentUser && state.currentUser.role === 'player'
+          ? state.currentUser.data
+          : (state.players.find(function (p) { return p.id === state.selectedDashboardPlayerId; }) || state.players[0]);
+
+        const selected_size = document.getElementById('order-size').value;
+        const qty = parseInt(document.getElementById('order-qty').value, 10) || 1;
+        const total_price = qty * Number(item.price);
+        const player_name = document.getElementById('order-player-name').value.trim();
+        const payment_proof = document.getElementById('order-payment-proof').value.trim();
+
+        const payload = {
+          merch_id: item.id,
+          player_id: currentPlayer ? currentPlayer.id : null,
+          player_name: player_name,
+          item_name: item.item_name,
+          selected_size: selected_size,
+          qty: qty,
+          total_price: total_price,
+          payment_proof: payment_proof,
+          order_status: 'Waiting Verification'
+        };
+
+        if (IS_PREVIEW) {
+          state.merchandise_orders.unshift(Object.assign({ id: 'ord-' + Date.now(), created_at: 'Baru saja' }, payload));
+          item.stock = Math.max(0, item.stock - qty);
+        } else if (supabaseClient) {
+          const res = await supabaseClient.from('merchandise_orders').insert([payload]);
+          if (res.error) return showToast('Gagal mengirim pesanan: ' + res.error.message, 'error');
+          await supabaseClient.from('merchandise').update({ stock: Math.max(0, item.stock - qty) }).eq('id', item.id);
+          await fetchAllSupabaseData();
+        }
+
+        closeModal();
+        renderWorkspace();
+        showToast('Pesanan & bukti transfer berhasil dikirim!');
+      }
+
+      function openPayBillModal(billId) {
+        const b = state.billing.find(function (x) { return x.id === billId; });
+        if (!b) return;
+        const cfg = state.academy_settings;
+        openModal('Konfirmasi Transfer SPP — ' + b.period_month, `
+          <form onsubmit="window.app.submitBillTransfer(event, '${b.id}')" class="space-y-4 text-xs">
+            <div class="p-4 rounded-xl bg-[#E6F4F1] border border-emerald-200 space-y-1.5">
+              <div class="flex justify-between">
+                <span class="text-slate-600">Periode Tagihan:</span>
+                <span class="font-bold text-slate-900">${b.period_month}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Nominal Tagihan SPP:</span>
+                <span class="text-base font-extrabold text-emerald-700">${formatIDR(b.fee_amount)}</span>
+              </div>
+              <div class="pt-2 border-t border-emerald-200/70 flex items-center justify-between">
+                <span class="font-bold text-emerald-950">${cfg.default_bank_info}</span>
+                <button type="button" onclick="window.app.copyText('${cfg.default_bank_info}', 'Rekening Akademi')" class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold">Salin</button>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nomor Referensi / Nama Pengirim Transfer</label>
+              <input type="text" id="bill-transfer-ref" required placeholder="Contoh: TF BRI a.n Wali Atlet - Ref 771829" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
+              Kirim Konfirmasi Pembayaran SPP
+            </button>
+          </form>
+        `);
+      }
+
+      async function submitBillTransfer(e, billId) {
+        if (e) e.preventDefault();
+        const transfer_ref = document.getElementById('bill-transfer-ref').value.trim();
+        if (IS_PREVIEW) {
+          const idx = state.billing.findIndex(function (b) { return b.id === billId; });
+          if (idx > -1) {
+            state.billing[idx].transfer_ref = transfer_ref;
+            state.billing[idx].payment_status = 'Waiting Verification';
+          }
+        } else if (supabaseClient) {
+          const res = await supabaseClient
+            .from('attendance_billing')
+            .update({ transfer_ref: transfer_ref, payment_status: 'Waiting Verification' })
+            .eq('id', billId);
+          if (res.error) return showToast('Gagal konfirmasi: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Bukti transfer SPP berhasil dikirim! Menunggu verifikasi Admin.');
+      }
+
+      function openPlayerModal(playerId) {
+        const p = playerId ? state.players.find(function (x) { return x.id === playerId; }) : null;
+        openModal(p ? 'Edit Data & Paspor Atlet' : 'Registrasi Atlet Baru', `
+          <form onsubmit="window.app.savePlayer(event, '${p ? p.id : ''}')" class="space-y-3.5 text-xs">
+            <div class="flex items-center gap-3">
+              <img id="preview-player-photo" src="${p && p.photo_url ? p.photo_url : 'https://placehold.co/150x150/109E72/FFFFFF?text=FOTO'}" class="w-16 h-16 rounded-2xl object-cover border border-slate-200" />
+              <div class="flex-1">
+                <label class="block font-bold text-slate-700 mb-1">Foto Profil Atlet (Upload atau URL)</label>
+                <div class="flex gap-2">
+                  <input type="text" id="p-photo" value="${p && p.photo_url ? p.photo_url : ''}" placeholder="https://..." class="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl" />
+                  <label class="cursor-pointer px-3 py-1.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl shrink-0">
+                    Pilih File
+                    <input type="file" accept="image/*" class="hidden" onchange="window.app.handleImageFileUpload(this, 'p-photo', 'preview-player-photo')" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ID Login Atlet (Player Code)</label>
+                <input type="text" id="p-code" value="${p ? p.player_code : 'PW-2026-0' + (state.players.length + 1)}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Password Login Atlet</label>
+                <input type="text" id="p-pass" value="${p ? p.password : '123'}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Atlet</label>
+              <input type="text" id="p-name" value="${p ? p.full_name : ''}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kelompok Usia</label>
+                <select id="p-age" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl">
+                  ${['U-10', 'U-13', 'U-15', 'U-17'].map(function (g) {
+                    return '<option value="' + g + '" ' + (p && p.age_group === g ? 'selected' : '') + '>' + g + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Posisi</label>
+                <select id="p-pos" class="w-full px-2.5 py-2 border border-slate-200 rounded-xl">
+                  ${['GK', 'DF', 'MF', 'FW'].map(function (pos) {
+                    return '<option value="' + pos + '" ' + (p && p.position === pos ? 'selected' : '') + '>' + pos + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">No. Punggung</label>
+                <input type="number" id="p-jersey" value="${p ? p.jersey_number : 10}" required class="w-full px-2.5 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kaki</label>
+                <select id="p-foot" class="w-full px-2 py-2 border border-slate-200 rounded-xl">
+                  ${['Right', 'Left', 'Both'].map(function (f) {
+                    return '<option value="' + f + '" ' + (p && p.dominant_foot === f ? 'selected' : '') + '>' + f + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Tinggi (cm)</label>
+                <input type="number" id="p-height" value="${p ? p.height_cm : 165}" class="w-full px-2 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Berat (kg)</label>
+                <input type="number" id="p-weight" value="${p ? p.weight_kg : 55}" class="w-full px-2 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Status</label>
+                <select id="p-status" class="w-full px-2 py-2 border border-slate-200 rounded-xl">
+                  ${['Active', 'Scholarship', 'Injured'].map(function (s) {
+                    return '<option value="' + s + '" ' + (p && p.status === s ? 'selected' : '') + '>' + s + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">Simpan Data Atlet</button>
+          </form>
+        `);
+      }
+
+      async function savePlayer(e, id) {
+        if (e) e.preventDefault();
+        const payload = {
+          player_code: document.getElementById('p-code').value.trim(),
+          password: document.getElementById('p-pass').value.trim(),
+          full_name: document.getElementById('p-name').value.trim(),
+          photo_url: document.getElementById('p-photo').value.trim() || 'https://placehold.co/200x200/109E72/FFFFFF?text=PW',
+          age_group: document.getElementById('p-age').value,
+          position: document.getElementById('p-pos').value,
+          jersey_number: parseInt(document.getElementById('p-jersey').value, 10) || 10,
+          dominant_foot: document.getElementById('p-foot').value,
+          height_cm: parseInt(document.getElementById('p-height').value, 10) || 165,
+          weight_kg: parseInt(document.getElementById('p-weight').value, 10) || 55,
+          status: document.getElementById('p-status').value
+        };
+
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.players.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.players[idx] = Object.assign({}, state.players[idx], payload);
+          } else {
+            const newId = 'p-' + Date.now();
+            state.players.unshift(Object.assign({ id: newId }, payload));
+            state.selectedDashboardPlayerId = newId;
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('players').update(payload).eq('id', id)
+            : await supabaseClient.from('players').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan atlet: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Data atlet berhasil disimpan!');
+      }
+
+      async function deletePlayer(id) {
+        if (IS_PREVIEW) {
+          state.players = state.players.filter(function (p) { return p.id !== id; });
+        } else if (supabaseClient) {
+          const res = await supabaseClient.from('players').delete().eq('id', id);
+          if (res.error) return showToast('Gagal menghapus: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Data atlet dihapus.');
+      }
+
+      function openMerchModal(id) {
+        const m = id ? state.merchandise.find(function (x) { return x.id === id; }) : null;
+        openModal(m ? 'Edit Katalog Perlengkapan' : 'Posting Perlengkapan Baru ke Dashboard', `
+          <form onsubmit="window.app.saveMerch(event, '${m ? m.id : ''}')" class="space-y-3.5 text-xs">
+            <div class="flex items-center gap-3">
+              <img id="preview-merch-img" src="${m && m.image_url ? m.image_url : 'https://placehold.co/150x150/109E72/FFFFFF?text=KIT'}" class="w-16 h-16 rounded-xl object-cover border border-slate-200" />
+              <div class="flex-1">
+                <label class="block font-bold text-slate-700 mb-1">Foto Perlengkapan (Upload / URL)</label>
+                <div class="flex gap-2">
+                  <input type="text" id="m-img" value="${m && m.image_url ? m.image_url : ''}" placeholder="https://..." class="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl" />
+                  <label class="cursor-pointer px-3 py-1.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl shrink-0">
+                    Upload
+                    <input type="file" accept="image/*" class="hidden" onchange="window.app.handleImageFileUpload(this, 'm-img', 'preview-merch-img')" />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Perlengkapan / Jersey</label>
+              <input type="text" id="m-name" value="${m ? m.item_name : ''}" required placeholder="Contoh: Official Home Kit 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div class="grid grid-cols-3 gap-2.5">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kategori</label>
+                <input type="text" id="m-cat" value="${m ? m.category : 'Match Kit'}" required class="w-full px-2.5 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Harga (Rp)</label>
+                <input type="number" id="m-price" value="${m ? m.price : 225000}" required class="w-full px-2.5 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Stok</label>
+                <input type="number" id="m-stock" value="${m ? m.stock : 25}" required class="w-full px-2.5 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Ukuran Tersedia</label>
+                <input type="text" id="m-sizes" value="${m ? m.sizes : 'S, M, L, XL'}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Rekening Tujuan Transfer</label>
+                <input type="text" id="m-bank" value="${m ? m.bank_info : state.academy_settings.default_bank_info}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">Simpan & Tampilkan di Dashboard Pemain</button>
+          </form>
+        `);
+      }
+
+      async function saveMerch(e, id) {
+        if (e) e.preventDefault();
+        const payload = {
+          item_name: document.getElementById('m-name').value.trim(),
+          category: document.getElementById('m-cat').value.trim(),
+          price: Number(document.getElementById('m-price').value) || 0,
+          stock: parseInt(document.getElementById('m-stock').value, 10) || 0,
+          sizes: document.getElementById('m-sizes').value.trim(),
+          image_url: document.getElementById('m-img').value.trim() || 'https://placehold.co/400x300/109E72/FFFFFF?text=KIT',
+          bank_info: document.getElementById('m-bank').value.trim()
+        };
+
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.merchandise.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.merchandise[idx] = Object.assign({}, state.merchandise[idx], payload);
+          } else {
+            state.merchandise.unshift(Object.assign({ id: 'm-' + Date.now() }, payload));
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('merchandise').update(payload).eq('id', id)
+            : await supabaseClient.from('merchandise').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan perlengkapan: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Katalog perlengkapan berhasil diposting!');
+      }
+
+      async function deleteMerch(id) {
+        if (IS_PREVIEW) {
+          state.merchandise = state.merchandise.filter(function (m) { return m.id !== id; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('merchandise').delete().eq('id', id);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Item perlengkapan dihapus.');
+      }
+
+      async function updateOrderStatus(orderId, status) {
+        if (IS_PREVIEW) {
+          const idx = state.merchandise_orders.findIndex(function (o) { return o.id === orderId; });
+          if (idx > -1) state.merchandise_orders[idx].order_status = status;
+        } else if (supabaseClient) {
+          await supabaseClient.from('merchandise_orders').update({ order_status: status }).eq('id', orderId);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Status pesanan diubah menjadi ' + status);
+      }
+
+      async function deleteOrder(orderId) {
+        if (IS_PREVIEW) {
+          state.merchandise_orders = state.merchandise_orders.filter(function (o) { return o.id !== orderId; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('merchandise_orders').delete().eq('id', orderId);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Pesanan dihapus.');
+      }
+
+      function openEvalModal(id) {
+        const ev = id ? state.evaluations.find(function (x) { return x.id === id; }) : null;
+        openModal(ev ? 'Edit Rapor Performa FIFA' : 'Input Rapor Performa Baru', `
+          <form onsubmit="window.app.saveEval(event, '${ev ? ev.id : ''}')" class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Pilih Atlet</label>
+                <select id="ev-player" required class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                  ${state.players.map(function (p) {
+                    return '<option value="' + p.id + '" ' + (ev && ev.player_id === p.id ? 'selected' : '') + '>' + p.full_name + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Periode Evaluasi</label>
+                <input type="text" id="ev-period" value="${ev ? ev.eval_period : 'Semester Genap 2026'}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2.5">
+              <div><label class="block font-bold mb-1">Pace (1-99)</label><input type="number" id="ev-pac" value="${ev ? ev.pace : 85}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Shooting</label><input type="number" id="ev-sho" value="${ev ? ev.shooting : 82}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Passing</label><input type="number" id="ev-pas" value="${ev ? ev.passing : 86}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Dribbling</label><input type="number" id="ev-dri" value="${ev ? ev.dribbling : 85}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Defending</label><input type="number" id="ev-def" value="${ev ? ev.defending : 75}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Physical</label><input type="number" id="ev-phy" value="${ev ? ev.physical : 84}" min="1" max="99" class="w-full px-2.5 py-1.5 border rounded-xl" /></div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Catatan Taktikal Pelatih</label>
+              <textarea id="ev-notes" rows="3" required class="w-full px-3 py-2 border border-slate-200 rounded-xl">${ev ? ev.coach_notes : ''}</textarea>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl">Simpan Rapor FIFA</button>
+          </form>
+        `);
+      }
+
+      async function saveEval(e, id) {
+        if (e) e.preventDefault();
+        const pace = parseInt(document.getElementById('ev-pac').value, 10) || 80;
+        const shooting = parseInt(document.getElementById('ev-sho').value, 10) || 80;
+        const passing = parseInt(document.getElementById('ev-pas').value, 10) || 80;
+        const dribbling = parseInt(document.getElementById('ev-dri').value, 10) || 80;
+        const defending = parseInt(document.getElementById('ev-def').value, 10) || 80;
+        const physical = parseInt(document.getElementById('ev-phy').value, 10) || 80;
+        const overall_rating = Math.round((pace + shooting + passing + dribbling + defending + physical) / 6);
+
+        const payload = {
+          player_id: document.getElementById('ev-player').value,
+          eval_period: document.getElementById('ev-period').value.trim(),
+          pace: pace,
+          shooting: shooting,
+          passing: passing,
+          dribbling: dribbling,
+          defending: defending,
+          physical: physical,
+          overall_rating: overall_rating,
+          coach_notes: document.getElementById('ev-notes').value.trim()
+        };
+
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.evaluations.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.evaluations[idx] = Object.assign({}, state.evaluations[idx], payload);
+          } else {
+            state.evaluations.unshift(Object.assign({ id: 'ev-' + Date.now() }, payload));
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('player_evaluations').update(payload).eq('id', id)
+            : await supabaseClient.from('player_evaluations').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan evaluasi: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Rapor performa berhasil disimpan!');
+      }
+
+      async function deleteEval(id) {
+        if (IS_PREVIEW) {
+          state.evaluations = state.evaluations.filter(function (e) { return e.id !== id; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('player_evaluations').delete().eq('id', id);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Data evaluasi dihapus.');
+      }
+
+      function openScheduleModal(id) {
+        const s = id ? state.schedules.find(function (x) { return x.id === id; }) : null;
+        openModal(s ? 'Edit Jadwal Akademi' : 'Tambah Jadwal Latihan / Turnamen', `
+          <form onsubmit="window.app.saveSchedule(event, '${s ? s.id : ''}')" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Agenda / Turnamen</label>
+              <input type="text" id="s-title" value="${s ? s.title : ''}" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Tipe Agenda</label>
+                <select id="s-type" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                  ${['Training', 'Friendly', 'Tournament'].map(function (t) {
+                    return '<option value="' + t + '" ' + (s && s.event_type === t ? 'selected' : '') + '>' + t + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kategori Skuad</label>
+                <select id="s-age" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                  ${['All Squads', 'U-10', 'U-13', 'U-15', 'U-17'].map(function (g) {
+                    return '<option value="' + g + '" ' + (s && s.age_group === g ? 'selected' : '') + '>' + g + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block font-bold mb-1">Tanggal</label><input type="date" id="s-date" value="${s ? s.event_date : '2026-11-15'}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Waktu</label><input type="text" id="s-time" value="${s ? s.event_time : '15:30 WITA'}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block font-bold mb-1">Stadion / Lokasi</label><input type="text" id="s-venue" value="${s ? s.venue : 'Stadion Mini Pamanti Watatu'}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Lawan / Partner</label><input type="text" id="s-opp" value="${s ? s.opponent : 'Internal Squad'}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Status / Skor Hasil</label>
+              <input type="text" id="s-res" value="${s ? s.match_result : 'Scheduled'}" required class="w-full px-3 py-2 border rounded-xl" />
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl">Simpan Jadwal</button>
+          </form>
+        `);
+      }
+
+      async function saveSchedule(e, id) {
+        if (e) e.preventDefault();
+        const payload = {
+          title: document.getElementById('s-title').value.trim(),
+          event_type: document.getElementById('s-type').value,
+          age_group: document.getElementById('s-age').value,
+          event_date: document.getElementById('s-date').value,
+          event_time: document.getElementById('s-time').value.trim(),
+          venue: document.getElementById('s-venue').value.trim(),
+          opponent: document.getElementById('s-opp').value.trim(),
+          match_result: document.getElementById('s-res').value.trim()
+        };
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.schedules.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.schedules[idx] = Object.assign({}, state.schedules[idx], payload);
+          } else {
+            state.schedules.push(Object.assign({ id: 'sch-' + Date.now() }, payload));
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('schedules').update(payload).eq('id', id)
+            : await supabaseClient.from('schedules').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan jadwal: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Jadwal berhasil disimpan!');
+      }
+
+      async function deleteSchedule(id) {
+        if (IS_PREVIEW) {
+          state.schedules = state.schedules.filter(function (s) { return s.id !== id; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('schedules').delete().eq('id', id);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Jadwal dihapus.');
+      }
+
+      function openBillingModal(id) {
+        const b = id ? state.billing.find(function (x) { return x.id === id; }) : null;
+        openModal(b ? 'Edit Tagihan & Presensi' : 'Buat Tagihan SPP & Presensi Bulanan', `
+          <form onsubmit="window.app.saveBilling(event, '${b ? b.id : ''}')" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Pilih Atlet</label>
+              <select id="b-player" required class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                ${state.players.map(function (p) {
+                  return '<option value="' + p.id + '" ' + (b && b.player_id === p.id ? 'selected' : '') + '>' + p.full_name + ' (' + p.player_code + ')</option>';
+                }).join('')}
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block font-bold mb-1">Periode Bulan</label><input type="text" id="b-month" value="${b ? b.period_month : 'November 2026'}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+              <div><label class="block font-bold mb-1">Presensi Kehadiran (%)</label><input type="number" id="b-att" value="${b ? b.attendance_pct : 95}" min="0" max="100" required class="w-full px-3 py-2 border rounded-xl" /></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block font-bold mb-1">Nominal SPP (Rp)</label><input type="number" id="b-fee" value="${b ? b.fee_amount : 350000}" required class="w-full px-3 py-2 border rounded-xl" /></div>
+              <div>
+                <label class="block font-bold mb-1">Status Pembayaran</label>
+                <select id="b-status" class="w-full px-3 py-2 border rounded-xl">
+                  ${['Unpaid', 'Waiting Verification', 'Paid', 'Scholarship'].map(function (st) {
+                    return '<option value="' + st + '" ' + (b && b.payment_status === st ? 'selected' : '') + '>' + st + '</option>';
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Referensi Transfer / Catatan</label>
+              <input type="text" id="b-ref" value="${b ? b.transfer_ref : ''}" placeholder="Nomor referensi transfer / keterangan beasiswa" class="w-full px-3 py-2 border rounded-xl" />
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl">Simpan Tagihan</button>
+          </form>
+        `);
+      }
+
+      async function saveBilling(e, id) {
+        if (e) e.preventDefault();
+        const payload = {
+          player_id: document.getElementById('b-player').value,
+          period_month: document.getElementById('b-month').value.trim(),
+          attendance_pct: parseInt(document.getElementById('b-att').value, 10) || 0,
+          fee_amount: Number(document.getElementById('b-fee').value) || 0,
+          payment_status: document.getElementById('b-status').value,
+          transfer_ref: document.getElementById('b-ref').value.trim(),
+          notes: 'Iuran Akademi SSB Pamanti Watatu'
+        };
+        if (IS_PREVIEW) {
+          if (id) {
+            const idx = state.billing.findIndex(function (x) { return x.id === id; });
+            if (idx > -1) state.billing[idx] = Object.assign({}, state.billing[idx], payload);
+          } else {
+            state.billing.unshift(Object.assign({ id: 'bill-' + Date.now() }, payload));
+          }
+        } else if (supabaseClient) {
+          const res = id
+            ? await supabaseClient.from('attendance_billing').update(payload).eq('id', id)
+            : await supabaseClient.from('attendance_billing').insert([payload]);
+          if (res.error) return showToast('Gagal menyimpan tagihan: ' + res.error.message, 'error');
+          await fetchAllSupabaseData();
+        }
+        closeModal();
+        renderWorkspace();
+        showToast('Data tagihan & presensi disimpan!');
+      }
+
+      async function approveBillPayment(billId) {
+        if (IS_PREVIEW) {
+          const idx = state.billing.findIndex(function (b) { return b.id === billId; });
+          if (idx > -1) state.billing[idx].payment_status = 'Paid';
+        } else if (supabaseClient) {
+          await supabaseClient.from('attendance_billing').update({ payment_status: 'Paid' }).eq('id', billId);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Pembayaran SPP diverifikasi LUNAS!');
+      }
+
+      async function deleteBilling(id) {
+        if (IS_PREVIEW) {
+          state.billing = state.billing.filter(function (b) { return b.id !== id; });
+        } else if (supabaseClient) {
+          await supabaseClient.from('attendance_billing').delete().eq('id', id);
+          await fetchAllSupabaseData();
+        }
+        renderWorkspace();
+        showToast('Data tagihan dihapus.');
+      }
+
+      // =================================================================
+      // INITIALIZATION & GLOBAL EXPOSURE (INSTANT READY)
+      // =================================================================
+      window.app = {
+        switchLoginTab: switchLoginTab,
+        handlePlayerLogin: handlePlayerLogin,
+        handleAdminLogin: handleAdminLogin,
+        quickLogin: quickLogin,
+        handleLogout: handleLogout,
+        navigate: navigate,
+        handleGlobalSearch: handleGlobalSearch,
+        refreshAllData: refreshAllData,
+        selectDashboardPlayer: selectDashboardPlayer,
+        toggleCalendarMonth: toggleCalendarMonth,
+        setPlayerAgeFilter: setPlayerAgeFilter,
+        handleImageFileUpload: handleImageFileUpload,
+        copyText: copyText,
+        formatIDR: formatIDR,
+        closeModal: closeModal,
+        openUpdatePhotoModal: openUpdatePhotoModal,
+        savePhotoUpdate: savePhotoUpdate,
+        openOrderMerchModal: openOrderMerchModal,
+        submitMerchOrder: submitMerchOrder,
+        openPayBillModal: openPayBillModal,
+        submitBillTransfer: submitBillTransfer,
+        openPlayerModal: openPlayerModal,
+        savePlayer: savePlayer,
+        deletePlayer: deletePlayer,
+        openMerchModal: openMerchModal,
+        saveMerch: saveMerch,
+        deleteMerch: deleteMerch,
+        updateOrderStatus: updateOrderStatus,
+        deleteOrder: deleteOrder,
+        openEvalModal: openEvalModal,
+        saveEval: saveEval,
+        deleteEval: deleteEval,
+        openScheduleModal: openScheduleModal,
+        saveSchedule: saveSchedule,
+        deleteSchedule: deleteSchedule,
+        openBillingModal: openBillingModal,
+        saveBilling: saveBilling,
+        approveBillPayment: approveBillPayment,
+        deleteBilling: deleteBilling,
+        switchSettingsTab: switchSettingsTab,
+        saveAcademySettings: saveAcademySettings,
+        openStaffModal: openStaffModal,
+        saveStaff: saveStaff,
+        promoteToHeadCoach: promoteToHeadCoach,
+        deleteStaff: deleteStaff
+      };
+
+      async function initApp() {
+        if (IS_PREVIEW) {
+          document.getElementById('preview-banner').classList.remove('hidden');
+          document.getElementById('preview-quick-login').classList.remove('hidden');
+          loadPreviewDummyData();
+        } else if (supabaseClient) {
+          try {
+            const sessionRes = await supabaseClient.auth.getSession();
+            if (sessionRes.data && sessionRes.data.session) {
+              await fetchAllSupabaseData();
+              loginSuccess({
+                role: 'admin',
+                data: {
+                  id: sessionRes.data.session.user.id,
+                  full_name: state.academy_settings.head_coach_name || sessionRes.data.session.user.email.split('@')[0].toUpperCase(),
+                  email: sessionRes.data.session.user.email,
+                  photo_url: state.academy_settings.head_coach_photo
+                }
+              });
+            }
+          } catch (e) {}
+        }
+        refreshIcons();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>
